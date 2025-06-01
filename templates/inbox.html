@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/alpinejs" defer></script>
 </head>
-<body class="bg-gray-100 font-sans" x-data="inboxApp()">
+<body class="bg-gray-100 font-sans" x-data="inboxApp()" x-init="init()">
   <div class="flex flex-col md:flex-row min-h-screen">
     {% include 'sidebar.html' %}
 
@@ -107,6 +107,15 @@
         newMessage: '',
         messages: [],
 
+        async init() {
+          const params = new URLSearchParams(window.location.search);
+          const email = params.get('email');
+          const name = params.get('name');
+          if (email && name) {
+            await this.openChat(email, name);
+          }
+        },
+
         async openChat(email, name) {
           this.currentEmail = email;
           this.currentName = name;
@@ -152,10 +161,19 @@
           await this.loadMessages();
         },
 
-        async clearChat() {
+        async clearChat(scope) {
           if (!confirm('Clear chat history with this user?')) return;
 
-          await fetch(`/api/messages/${this.currentEmail}`, { method: 'DELETE' });
+          if (scope === 'me') {
+            await fetch(`/api/messages/clear`, {
+              method: 'POST'
+            });
+          } else {
+            await fetch(`/api/messages/${this.currentEmail}`, {
+              method: 'DELETE'
+            });
+          }
+
           await this.loadMessages();
         },
 

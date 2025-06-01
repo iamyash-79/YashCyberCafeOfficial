@@ -3,44 +3,91 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Home - {{ short_name }}</title>
+  <title>Sales - {{ short_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 font-sans">
-
-  <div class="flex" id="mainContent">
-
-    <!-- Include Sidebar -->
+  <div class="flex">
+    
+    <!-- Sidebar -->
     {% include 'sidebar.html' %}
 
     <!-- Main Content -->
     <main class="flex-1 p-6">
       <header class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold">Welcome to Yash Cyber Cafe</h1>
+        <h1 class="text-2xl font-semibold">Sales Overview</h1>
       </header>
 
+      <!-- Analytics Summary -->
       <div class="bg-white p-4 rounded shadow mb-6">
-        <h2 class="font-semibold mb-2">Analytics</h2>
-        <div class="flex space-x-4">
-          <div>
-            <div class="text-sm text-gray-500">Site sessions</div>
-            <div class="text-lg">-</div>
-          </div>
-          <div>
-            <div class="text-sm text-gray-500">Total sales</div>
-            <div class="text-lg">-</div>
-          </div>
+        <h2 class="font-semibold mb-4">Sales Analytics</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+         
+          <!-- Total Orders -->
+<a href="{{ url_for('orders') }}" class="block bg-blue-100 p-4 rounded hover:bg-blue-200">
+  <div class="text-sm text-gray-600">Total Orders</div>
+  <div class="text-xl font-bold">{{ total_orders }}</div>
+</a>
+          
+<!-- Delivered Orders -->
+<a href="{{ url_for('orders', status='delivered') }}" class="block bg-green-100 p-4 rounded hover:bg-green-200">
+  <div class="text-sm text-gray-600">Delivered Orders</div>
+  <div class="text-xl font-bold">{{ delivered_orders }}</div>
+</a>
+
+          <!-- Pending Orders -->
+<a href="{{ url_for('orders', status='pending') }}" class="block bg-yellow-100 p-4 rounded hover:bg-yellow-200">
+  <div class="text-sm text-gray-600">Pending Orders</div>
+  <div class="text-xl font-bold">{{ pending_orders }}</div>
+</a>
+
+          <!-- Total Revenue (no filter) -->
+<div class="bg-purple-100 p-4 rounded">
+  <div class="text-sm text-gray-600">Total Revenue</div>
+  <div class="text-xl font-bold">₹{{ total_revenue }}</div>
+</div>
         </div>
       </div>
 
-      <div class="flex space-x-4">
-        <div class="bg-white p-4 rounded shadow w-2/3">
-          <h2 class="font-semibold mb-2">Activity Feed</h2>
-          <p class="text-sm text-gray-500 mb-4">No recent activity</p>
-        </div>
-        <div class="bg-white p-4 rounded shadow w-1/3">
-          <h2 class="font-semibold mb-2">Suggested for you</h2>
-          <p class="text-sm mb-4">Set up local delivery options</p>
+      <!-- Orders Table -->
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-4">All Orders</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full table-auto text-sm">
+            <thead>
+              <tr class="bg-gray-100 text-left">
+                <th class="px-4 py-2">Item</th>
+                <th class="px-4 py-2">Qty</th>
+                <th class="px-4 py-2">Amount</th>
+                <th class="px-4 py-2">Status</th>
+                <th class="px-4 py-2">User</th>
+                <th class="px-4 py-2">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in orders %}
+                <tr class="border-b hover:bg-gray-50">
+                  <td class="px-4 py-2">{{ order.item_name }}</td>
+                  <td class="px-4 py-2">{{ order.quantity }}</td>
+                  <td class="px-4 py-2">₹{{ order.amount }}</td>
+                  <td class="px-4 py-2">
+                    <span class="px-2 py-1 rounded text-xs 
+                      {% if order.status == 'delivered' %}bg-blue-200 text-black-800
+                      {% elif order.status == 'pending' %}bg-yellow-200 text-black-800
+                      {% elif order.status == 'cancelled' %}bg-red-200 text-black-800
+                      {% else %}bg-green-200 text-black-800{% endif %}">
+                      {{ order.status }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-2">{{ order.user_name }}</td>
+                  <td class="px-4 py-2">{{ order.order_date }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% if orders|length == 0 %}
+            <p class="text-gray-500 p-4">No orders available.</p>
+          {% endif %}
         </div>
       </div>
     </main>

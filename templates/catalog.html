@@ -1,4 +1,3 @@
-<!-- templates/catalog.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,89 +5,266 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Catalog - {{ short_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    .cursor-pointer { cursor: pointer; }
+  </style>
 </head>
 <body class="bg-gray-100 font-sans">
-  <div class="flex" id="mainContent">
-    
-    <!-- Sidebar with dropdown -->
-    {% include 'sidebar.html' %}
+  <div x-data="catalogApp()">
+    <div class="flex min-h-screen">
+      {% include 'sidebar.html' %}
 
-    <!-- Main Content -->
-    <main class="flex-1 p-6">
-      <header class="mb-6">
-        <h1 class="text-2xl font-semibold">Welcome to Yash Cyber Cafe</h1>
-      </header>
+      <main class="flex-1 p-6">
 
-      <!-- Catalog Page Content -->
-      <section class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow">
-        <h2 class="text-xl font-semibold mb-4">Add New Catalog Item</h2>
+        <div class="flex justify-between items-center mt-12 mb-6">
+          <h1 class="text-2xl font-semibold">Catalog Management</h1>
+          <button
+            @click="showAddModal = true"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            + Add New Catalog
+          </button>
+        </div>
 
-        <form action="{{ url_for('catalog') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
-          
-          <!-- Product Name -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-4">
+              {% for category, message in messages %}
+                <div class="p-3 rounded text-white 
+                            {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% else %}bg-blue-600{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Catalog Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for item in catalog_items %}
+          <div class="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <div class="w-full mb-3">
+              {% if item.images %}
+                <img 
+                  src="{{ url_for('static', filename='uploads/' ~ item.images[0]) }}" 
+                  alt="Catalog Image"
+                  class="w-full h-48 object-cover rounded"
+                />
+              {% endif %}
+            </div>
+
+            <h2 class="text-lg font-semibold text-center mb-1">{{ item.name }}</h2>
+
+            {% if item.description %}
+              <!-- Only the word "Description" is clickable -->
+              <p class="text-sm text-blue-600 text-center mb-2 cursor-pointer underline"
+                 @click="openDescriptionPopup(`{{ item.description | escape }}`)">
+                Description
+              </p>
+            {% endif %}
+
+            <p class="text-gray-800 text-sm mb-2 text-center">
+              Price:
+              {% if item.discount_price %}
+                <span class="line-through">₹{{ item.price }}</span>
+                <span class="text-green-700 font-bold ml-2">₹{{ item.discount_price }}</span>
+              {% else %}
+                ₹{{ item.price }}
+              {% endif %}
+            </p>
+
+            <!-- Admin Actions -->
+            <div class="flex space-x-2 mt-2 w-full">
+              <form action="{{ url_for('delete_catalog', item_id=item.id) }}" method="POST" class="w-1/2">
+                <button type="submit"
+                        onclick="return confirm('Are you sure you want to delete this item?')"
+                        class="w-full bg-red-600 hover:bg-red-700 text-white text-sm py-2 rounded">
+                  Delete
+                </button>
+              </form>
+
+              <button 
+                class="w-1/2 bg-gray-600 hover:bg-gray-700 text-white text-sm py-2 rounded"
+                @click.prevent='openEditModal({{ item | tojson }})'
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </main>
+    </div>
+
+    <!-- Add Catalog Modal -->
+    <div
+      x-show="showAddModal"
+      x-cloak
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
+        <button @click="showAddModal = false" class="absolute top-2 right-3 text-gray-500 hover:text-black text-xl">✖</button>
+        <h2 class="text-xl font-semibold mb-4 text-center">Add New Catalog</h2>
+
+        <form action="{{ url_for('catalog') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
           <div>
             <label for="name" class="block font-medium text-gray-700">Product Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded"
-            />
+            <input type="text" id="name" name="name" required class="w-full px-3 py-2 border rounded"/>
           </div>
 
-          <!-- Price -->
+          <div>
+            <label for="description" class="block font-medium text-gray-700">Description</label>
+            <input type="text" id="description" name="description" class="w-full px-3 py-2 border rounded"/>
+          </div>
+
           <div>
             <label for="price" class="block font-medium text-gray-700">Price</label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              step="0.01"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded"
-            />
+            <input type="number" id="price" name="price" step="1" required class="w-full px-3 py-2 border rounded"/>
           </div>
 
-          <!-- Discounted Price -->
           <div>
-            <label for="discount_price" class="block font-medium text-gray-700">Discounted Price</label>
-            <input
-              type="number"
-              id="discount_price"
-              name="discount_price"
-              step="0.01"
-              class="w-full px-4 py-2 border border-gray-300 rounded"
-            />
+            <label for="discount_price" class="block font-medium text-gray-700">Discount Price</label>
+            <input type="number" id="discount_price" name="discount_price" step="1" class="w-full px-3 py-2 border rounded"/>
           </div>
 
-          <!-- Product Images -->
           <div>
-            <label for="images" class="block font-medium text-gray-700">Upload Images (1 to 5)</label>
-            <input
-              type="file"
-              id="images"
-              name="images"
-              accept="image/*"
-              multiple
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded bg-white"
-            />
-            <p class="text-sm text-gray-500 mt-1">You can upload up to 5 images.</p>
+            <label for="images" class="block font-medium text-gray-700">Upload Images (1–5)</label>
+            <input type="file" id="images" name="images" accept="image/*" multiple required class="w-full"/>
           </div>
 
-          <!-- Submit -->
-          <div>
-            <button
-              type="submit"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium"
-            >
-              Add Item
-            </button>
-          </div>
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
+            Upload Catalog
+          </button>
         </form>
-      </section>
-    </main>
+      </div>
+    </div>
+
+    <!-- Edit Catalog Modal -->
+    <div
+      x-show="showEditModal"
+      x-cloak
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
+        <button @click="showEditModal = false" class="absolute top-2 right-3 text-gray-500 hover:text-black text-xl">✖</button>
+        <h2 class="text-xl font-semibold mb-4 text-center">Edit Catalog Item</h2>
+
+        <form 
+          x-bind:action="`/edit_catalog/${editItem.id}`" 
+          method="POST" 
+          enctype="multipart/form-data"
+          class="space-y-4"
+        >
+          <div>
+            <label class="block font-medium text-gray-700">Product Name</label>
+            <input 
+              type="text" 
+              name="name" 
+              x-model="editItem.name" 
+              required 
+              class="w-full px-3 py-2 border rounded"
+            />
+          </div>
+          <div>
+            <label class="block font-medium text-gray-700">Description</label>
+            <input 
+              type="text" 
+              name="description" 
+              x-model="editItem.description" 
+              class="w-full px-3 py-2 border rounded"
+            />
+          </div>
+          <div>
+            <label class="block font-medium text-gray-700">Price</label>
+            <input 
+              type="number" 
+              name="price" 
+              step="1" 
+              x-model.number="editItem.price" 
+              required 
+              class="w-full px-3 py-2 border rounded"
+            />
+          </div>
+          <div>
+            <label class="block font-medium text-gray-700">Discount Price</label>
+            <input 
+              type="number" 
+              name="discount_price" 
+              step="1" 
+              x-model.number="editItem.discount_price" 
+              class="w-full px-3 py-2 border rounded"
+            />
+          </div>
+
+          <!-- New image upload (1 to 5 images) -->
+          <div>
+            <label class="block font-medium text-gray-700">Update Images (1 to 5)</label>
+            <input 
+              type="file" 
+              name="images" 
+              accept="image/*" 
+              multiple 
+              class="w-full px-3 py-2 border rounded"
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+          >
+            Update Catalog
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Description Modal -->
+    <div 
+      x-show="showDescription" 
+      x-cloak 
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-auto"
+    >
+      <div class="bg-white w-full max-w-md p-6 rounded shadow relative">
+        <button 
+          @click="showDescription = false" 
+          class="absolute top-2 right-2 text-gray-500 hover:text-black text-xl" 
+          aria-label="Close description modal"
+        >
+          ✖
+        </button>
+        <h3 class="text-lg font-bold mb-2 text-center">Description</h3>
+        <p class="whitespace-pre-wrap text-gray-800 text-sm" x-text="descriptionText"></p>
+      </div>
+    </div>
+
   </div>
+
+  <script>
+    function catalogApp() {
+      return {
+        showAddModal: false,
+        showEditModal: false,
+        showDescription: false,
+        descriptionText: '',
+        editItem: {
+          id: null,
+          name: '',
+          description: '',
+          price: null,
+          discount_price: null,
+        },
+        openEditModal(item) {
+          this.editItem = { ...item };
+          this.showEditModal = true;
+        },
+        openDescriptionPopup(desc) {
+          this.descriptionText = desc;
+          this.showDescription = true;
+        }
+      };
+    }
+  </script>
 </body>
 </html>

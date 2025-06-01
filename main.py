@@ -1,12 +1,22 @@
-from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify, current_app
 import sqlite3
 import os
+import json
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
+
+@app.context_processor
+def inject_user():
+    return dict(current_user=current_user)
 
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -16,12 +26,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_user_db():
-    conn = sqlite3.connect('user.db')
+    conn = sqlite3.connect('user.db', timeout=10)  # Added timeout to help with locking
     conn.row_factory = sqlite3.Row
     return conn
 
 def get_catalog_db():
-    conn = sqlite3.connect('catalog.db')
+    conn = sqlite3.connect('catalog.db', timeout=10)  # Same here
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -30,12 +40,13 @@ def get_user():
         return None
     conn = get_user_db()
     row = conn.execute(
-        "SELECT first_name, last_name, email, profile_image, role, mobile FROM users WHERE email = ?",
+        "SELECT id, first_name, last_name, email, profile_image, role, mobile FROM users WHERE email = ?",
         (session["user"],)
     ).fetchone()
     conn.close()
     if row:
         return {
+            "id": row["id"],                # <-- add this line
             "name": f"{row['first_name']} {row['last_name']}",
             "first_name": row['first_name'],
             "last_name": row['last_name'],
@@ -47,7 +58,6 @@ def get_user():
         }
     return None
 
-@app.route("/")
 @app.route("/home")
 def home():
     user = get_user()
@@ -55,17 +65,22 @@ def home():
         return redirect(url_for("login"))
 
     conn = get_catalog_db()
-    cursor = conn.execute("SELECT id, name, price, discount_price, images FROM catalog")
-    catalog_items = [
-        {
+    cursor = conn.execute("SELECT id, name, description, price, discount_price, images FROM catalog")
+    catalog_items = []
+    for row in cursor.fetchall():
+        try:
+            images = json.loads(row["images"]) if row["images"] else []
+        except Exception:
+            images = []
+
+        catalog_items.append({
             'id': row['id'],
             'name': row['name'],
+            'description': row['description'],
             'price': row['price'],
             'discount_price': row['discount_price'],
-            'images': row['images'].split(',') if row['images'] else []
-        }
-        for row in cursor.fetchall()
-    ]
+            'images': images
+        })
     conn.close()
 
     return render_template("home.html", user=user, short_name=user["short_name"], catalog_items=catalog_items)
@@ -78,27 +93,14 @@ def my_orders():
 
     conn = get_catalog_db()
     cursor = conn.execute(
-        "SELECT id, item_name, quantity, status, address1, address2, city, pincode, order_date FROM orders WHERE user_email = ?", 
+        """SELECT id, item_name, quantity, status, address1, address2, city, pincode, order_date, is_paid, amount 
+           FROM orders WHERE user_email = ?""", 
         (user['email'],)
     )
     my_orders = [dict(row) for row in cursor.fetchall()]
     conn.close()
 
-    return render_template("my_orders.html", user=user, short_name=user["short_name"], my_orders=my_orders)
-
-@app.route("/orders")
-def orders():
-    user = get_user()
-    if not user or user.get('role') != 'admin':
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("home"))
-
-    conn = get_catalog_db()
-    cursor = conn.execute("SELECT * FROM orders")
-    orders = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-
-    return render_template("orders.html", user=user, short_name=user["short_name"], orders=orders)
+    return render_template("my_orders.html", user=user, short_name=user.get("short_name", ""), my_orders=my_orders)
 
 @app.route('/submit_order/<int:item_id>', methods=['POST'])
 def submit_order(item_id):
@@ -107,6 +109,7 @@ def submit_order(item_id):
         flash("Login required to submit an order", "error")
         return redirect(url_for("login"))
 
+    # Get form data
     name = request.form.get('name')
     contact = request.form.get('contact')
     email = request.form.get('email')
@@ -114,30 +117,89 @@ def submit_order(item_id):
     address2 = request.form.get('address2')
     city = request.form.get('city')
     pincode = request.form.get('pincode')
+    quantity = request.form.get('quantity')
+    amount = request.form.get('amount')
+
+    # Validate required fields
+    if not quantity or not amount:
+        flash("Quantity and amount are required.", "error")
+        return redirect(request.referrer or url_for('home'))
 
     conn = get_catalog_db()
-    # First fetch item details from catalog
-    item = conn.execute("SELECT name FROM catalog WHERE id = ?", (item_id,)).fetchone()
+    item = conn.execute("SELECT id, name FROM catalog WHERE id = ?", (item_id,)).fetchone()
     if not item:
         flash("Item not found.", "error")
         conn.close()
         return redirect(url_for("home"))
 
-    conn.execute('''
+    order_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_id = user.get('id', None)
+
+    conn.execute("""
         INSERT INTO orders 
-        (user_name, user_contact, user_email, item_id, item_name, quantity, status, address1, address2, city, pincode, order_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATE('now'))
-    ''', (name, contact, email, item_id, item['name'], 1, 'pending', address1, address2, city, pincode))
+        (item_name, quantity, amount, status, address1, address2, city, pincode, order_date, user_id, user_name, user_contact, user_email) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        item['name'], 
+        int(quantity), 
+        float(amount), 
+        'pending', 
+        address1, 
+        address2, 
+        city, 
+        pincode, 
+        order_date, 
+        user_id,
+        name,
+        contact,
+        email
+    ))
     conn.commit()
     conn.close()
 
     flash('Order submitted successfully!', 'success')
     return redirect(url_for('home'))
 
+@app.route("/orders")
+def orders():
+    user = get_user()
+    if not user or user.get('role') != 'admin':
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("home"))
+
+    status_filter = request.args.get("status")
+    date_filter = request.args.get("date")
+
+    conn = get_catalog_db()
+    query = "SELECT * FROM orders WHERE 1=1"
+    params = []
+
+    if status_filter:
+        query += " AND status = ?"
+        params.append(status_filter)
+
+    if date_filter:
+        query += " AND DATE(order_date) = ?"
+        params.append(date_filter)
+
+    query += " ORDER BY order_date DESC"
+    cursor = conn.execute(query, params)
+
+    orders = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    return render_template("orders.html",
+        user=user,
+        short_name=user.get("short_name", ""),
+        orders=orders,
+        selected_status=status_filter or "",
+        selected_date=date_filter or ""
+    )
+
 @app.route('/accept_order/<int:order_id>', methods=['POST'])
 def accept_order(order_id):
     user = get_user()
-    if not user or user['role'] != 'admin':
+    if not user or user.get('role') != 'admin':
         flash("Unauthorized", "error")
         return redirect(url_for('home'))
 
@@ -163,7 +225,7 @@ def cancel_order(order_id):
         conn.close()
         return redirect(url_for('home'))
 
-    if user['email'] != order['user_email'] and user['role'] != 'admin':
+    if user['email'] != order['user_email'] and user.get('role') != 'admin':
         flash("Unauthorized to cancel this order.", "error")
         conn.close()
         return redirect(url_for('home'))
@@ -173,12 +235,69 @@ def cancel_order(order_id):
     conn.close()
 
     flash("Order cancelled.", "success")
-    return redirect(url_for('orders') if user['role'] == 'admin' else url_for('My_orders'))
+    return redirect(url_for('orders') if user.get('role') == 'admin' else url_for('my_orders'))
+
+@app.route('/deliver_order/<int:order_id>', methods=['POST'])
+def deliver_order(order_id):
+    user = get_user()
+    if not user or user.get('role') != 'admin':
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("home"))
+
+    conn = get_catalog_db()
+    order = conn.execute("SELECT status FROM orders WHERE id = ?", (order_id,)).fetchone()
+
+    if not order:
+        flash("Order not found.", "error")
+        conn.close()
+        return redirect(url_for("orders"))
+
+    if order['status'] == 'accepted':
+        conn.execute("UPDATE orders SET status = 'delivered' WHERE id = ?", (order_id,))
+        conn.commit()
+        flash("Order marked as delivered.", "success")
+    else:
+        flash("Only accepted orders can be marked as delivered.", "error")
+
+    conn.close()
+    return redirect(url_for("orders"))
+
+@app.route('/mark_paid/<int:order_id>', methods=['POST'])
+def mark_paid(order_id):
+    user = get_user()
+    if not user:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("login"))
+
+    conn = get_catalog_db()
+    order = conn.execute("SELECT id, user_email FROM orders WHERE id = ?", (order_id,)).fetchone()
+
+    if not order:
+        flash("Order not found.", "error")
+        conn.close()
+        return redirect(url_for("home"))
+
+    # Only admin or order owner can mark as paid
+    if user.get('role') != 'admin' and user['email'] != order['user_email']:
+        flash("Unauthorized access.", "error")
+        conn.close()
+        return redirect(url_for("home"))
+
+    conn.execute("UPDATE orders SET is_paid = 1 WHERE id = ?", (order_id,))
+    conn.commit()
+    conn.close()
+
+    flash("Order marked as paid.", "success")
+
+    if user.get('role') == 'admin':
+        return redirect(url_for("orders"))
+    else:
+        return redirect(url_for("my_orders"))
 
 @app.route('/delete_order/<int:order_id>', methods=['POST'])
 def delete_order(order_id):
     user = get_user()
-    if not user or user['role'] != 'admin':
+    if not user or user.get('role') != 'admin':
         flash("Unauthorized", "error")
         return redirect(url_for('home'))
 
@@ -195,7 +314,24 @@ def sales():
     user = get_user()
     if not user:
         return redirect(url_for("login"))
-    return render_template("sales.html", user=user, short_name=user.get("short_name"))
+
+    conn = get_catalog_db()
+    total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
+    delivered_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'delivered'").fetchone()[0]
+    pending_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'pending'").fetchone()[0]
+    total_revenue = conn.execute("SELECT SUM(amount) FROM orders WHERE status = 'delivered'").fetchone()[0] or 0
+    orders = conn.execute("SELECT * FROM orders ORDER BY order_date DESC").fetchall()
+    conn.close()
+
+    return render_template("sales.html",
+        user=user,
+        short_name=user["short_name"],
+        total_orders=total_orders,
+        delivered_orders=delivered_orders,
+        pending_orders=pending_orders,
+        total_revenue=int(total_revenue),
+        orders=orders
+    )
 
 @app.route('/catalog', methods=['GET', 'POST'])
 def catalog():
@@ -207,6 +343,7 @@ def catalog():
 
     if request.method == 'POST':
         name = request.form['name']
+        description = request.form.get('description', '')
         price = request.form['price']
         discount_price = request.form['discount_price']
         images = request.files.getlist('images')
@@ -215,27 +352,126 @@ def catalog():
             flash("Upload between 1 to 5 images.", "error")
             return redirect(url_for('catalog'))
 
-        os.makedirs('static/catalog_uploads', exist_ok=True)
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
+        os.makedirs(upload_folder, exist_ok=True)
         saved_filenames = []
 
         for img in images:
             if img and allowed_file(img.filename):
                 filename = secure_filename(img.filename)
-                img_path = os.path.join('static/catalog_uploads', filename)
+                img_path = os.path.join(upload_folder, filename)
                 img.save(img_path)
                 saved_filenames.append(filename)
 
         conn = get_catalog_db()
         conn.execute(
-            "INSERT INTO catalog (name, price, discount_price, images) VALUES (?, ?, ?, ?)",
-            (name, price, discount_price, ','.join(saved_filenames))
+            "INSERT INTO catalog (name, description, price, discount_price, images) VALUES (?, ?, ?, ?, ?)",
+            (name, description, price, discount_price, json.dumps(saved_filenames))
         )
         conn.commit()
         conn.close()
 
         flash("Catalog item added successfully!", "success")
+        return redirect(url_for('catalog'))
 
-    return render_template('catalog.html', user=user, short_name=short_name)
+    # GET: Fetch and prepare catalog items for display
+    conn = get_catalog_db()
+    rows = conn.execute("SELECT * FROM catalog ORDER BY id DESC").fetchall()
+    catalog_items = []
+    for row in rows:
+        try:
+            images = json.loads(row["images"]) if row["images"] else []
+        except Exception:
+            images = []
+
+        catalog_items.append({
+            "id": row["id"],
+            "name": row["name"],
+            "description": row["description"],
+            "price": row["price"],
+            "discount_price": row["discount_price"],
+            "images": images
+        })
+    conn.close()
+
+    return render_template(
+        'catalog.html',
+        user=user,
+        short_name=short_name,
+        catalog_items=catalog_items
+    )
+
+@app.route('/edit_catalog/<int:item_id>', methods=['POST'])
+def edit_catalog(item_id):
+    user = get_user()
+    if not user or user.get("role") != "admin":
+        flash("Unauthorized", "error")
+        return redirect(url_for("home"))
+
+    conn = get_catalog_db()
+
+    # Get existing images from DB for this item
+    cur = conn.execute("SELECT images FROM catalog WHERE id = ?", (item_id,))
+    row = cur.fetchone()
+    old_images = []
+
+    if row and row[0]:
+        try:
+            old_images = json.loads(row[0])
+            if not isinstance(old_images, list):
+                old_images = []
+        except json.JSONDecodeError:
+            raw = row[0]
+            if ',' in raw:
+                old_images = [img.strip() for img in raw.split(',')]
+            else:
+                old_images = [raw.strip()]
+
+    name = request.form['name']
+    description = request.form['description']
+    price = request.form['price']
+    discount_price = request.form['discount_price']
+
+    uploaded_files = request.files.getlist('images')
+    new_images = []
+
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
+
+    if uploaded_files and any(f.filename for f in uploaded_files):
+        # Delete old image files
+        for img in old_images:
+            try:
+                os.remove(os.path.join(upload_folder, img))
+            except Exception as e:
+                print(f"Error deleting old image {img}: {e}")
+
+        # Save new images
+        for file in uploaded_files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(upload_folder, filename)
+                file.save(filepath)
+                new_images.append(filename)
+
+        if len(new_images) > 5:
+            flash("You can upload maximum 5 images", "error")
+            conn.close()
+            return redirect(url_for('catalog'))
+    else:
+        # No new images uploaded, keep old ones
+        new_images = old_images
+
+    conn.execute("""
+        UPDATE catalog
+        SET name = ?, description = ?, price = ?, discount_price = ?, images = ?
+        WHERE id = ?
+    """, (name, description, price, discount_price, json.dumps(new_images), item_id))
+
+    conn.commit()
+    conn.close()
+
+    flash("Catalog item updated successfully.", "success")
+    return redirect(url_for('catalog'))
 
 @app.route('/delete_catalog/<int:item_id>', methods=['POST'])
 def delete_catalog(item_id):
@@ -252,7 +488,7 @@ def delete_catalog(item_id):
         image_list = images_row[0].split(',')
         for img_filename in image_list:
             if img_filename:
-                img_path = os.path.join(app.root_path, 'static/catalog_uploads', img_filename)
+                img_path = os.path.join(app.root_path, 'static/uploads', img_filename)
                 if os.path.exists(img_path):
                     os.remove(img_path)
 
@@ -671,7 +907,7 @@ def register():
 
         if password != confirm_password:
             flash("Passwords do not match", "error")
-            return redirect(url_for("register"))
+            return render_template("register.html")
 
         hashed_pw = generate_password_hash(password)
 
@@ -686,6 +922,7 @@ def register():
             return redirect(url_for("login"))
         except sqlite3.IntegrityError:
             flash("Email already registered.", "error")
+            return render_template("register.html")
         finally:
             conn.close()
 
