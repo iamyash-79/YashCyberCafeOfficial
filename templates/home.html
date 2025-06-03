@@ -19,7 +19,7 @@
     }
     .dot.active {
       opacity: 1;
-      background-color: #2563eb;
+      background-color: #0a3d62;
     }
   </style>
 </head>
@@ -27,17 +27,14 @@
   <div class="flex flex-col md:flex-row min-h-screen">
     {% include 'sidebar.html' %}
 
-    <main class="flex-1 px-4 sm:px-6 py-4 overflow-hidden">
-      <header class="flex justify-between items-center mb-4 sm:mb-6">
-        <h1 class="text-xl sm:text-2xl font-semibold">Welcome to Yash Cyber Cafe</h1>
-      </header>
+    <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden">
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div class="mb-4">
             {% for category, message in messages %}
               <div class="p-3 rounded text-white 
-                          {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% else %}bg-blue-600{% endif %}">
+                          {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% else %}bg-[#0a3d62]{% endif %}">
                 {{ message }}
               </div>
             {% endfor %}
@@ -48,7 +45,7 @@
       <div class="h-[75vh] overflow-y-auto pr-1 sm:pr-2">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {% for item in catalog_items %}
-          <div class="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col items-center">
+          <div class="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col items-center relative">
             <div class="w-full mb-3 relative">
               <div class="flex overflow-x-auto snap-x snap-mandatory space-x-3 pb-1" data-image-carousel>
                 {% for img in item.images %}
@@ -70,32 +67,32 @@
 
             {% if item.description %}
               <p 
-                class="text-blue-600 underline cursor-pointer text-sm text-center mb-2"
-                @click="openDescriptionPopup(`{{ item.description | escape }}`)"
+                class="text-blue-600 cursor-pointer text-sm text-center mb-2"
+                @click="openDescriptionPopup($event, `{{ item.description | escape }}`)"
               >
                 Description
               </p>
             {% endif %}
 
             <p class="text-gray-600 text-sm text-center">
-  Price:
-  {% if item.discount_price %}
-    <span class="line-through">₹{{ item.price }}</span>
-    <span class="text-green-800 text-lg font-semibold ml-2">₹{{ item.discount_price }}</span>
-  {% else %}
-    ₹{{ item.price }}
-  {% endif %}
-</p>
+              Price:
+              {% if item.discount_price %}
+                <span class="line-through">₹{{ item.price }}</span>
+                <span class="text-green-800 text-lg font-semibold ml-2">₹{{ item.discount_price }}</span>
+              {% else %}
+                ₹{{ item.price }}
+              {% endif %}
+            </p>
 
             {% if user and user.role == 'user' %}
-              <p class="text-center text-sm text-black-800">
+              <p class="text-center text-sm text-gray-800">
                 To Know More 
-                <a href="https://wa.me/917987190554" target="_blank" class="underline hover:text-blue-800">Click Here</a>
+                <a href="https://wa.me/917987190554" target="_blank" class="underline hover:text-[#0a3d62]">Click Here</a>
               </p>
             {% endif %}
 
             <button 
-              class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded w-full mb-2" 
+              class="bg-[#0a3d62] hover:bg-[#083050] text-white text-sm px-4 py-2 rounded w-full mb-2" 
               @click="openBuyPopup({{ item.id }}, {{ item.discount_price if item.discount_price else item.price }})"
             >
               Buy
@@ -120,49 +117,45 @@
       <h3 class="text-lg font-bold mb-2 text-center">Complete Your Order</h3>
 
       <form :action="'/submit_order/' + selectedItemId" method="POST" class="space-y-2">
-  <!-- existing fields -->
-  <input type="text" class="w-full border p-2 rounded" value="{{ user.name }}" readonly>
-  <input type="hidden" name="name" value="{{ user.name }}">
+        <input type="text" class="w-full border p-2 rounded" value="{{ user.name }}" readonly>
+        <input type="hidden" name="name" value="{{ user.name }}">
 
-  <input type="text" class="w-full border p-2 rounded" value="{{ user.contact }}" readonly>
-  <input type="hidden" name="contact" value="{{ user.contact }}">
+        <input type="text" class="w-full border p-2 rounded" value="{{ user.contact }}" readonly>
+        <input type="hidden" name="contact" value="{{ user.contact }}">
 
-  <input type="email" class="w-full border p-2 rounded" value="{{ user.email }}" readonly>
-  <input type="hidden" name="email" value="{{ user.email }}">
+        <input type="email" class="w-full border p-2 rounded" value="{{ user.email }}" readonly>
+        <input type="hidden" name="email" value="{{ user.email }}">
 
-  <input name="address1" type="text" class="w-full border p-2 rounded" placeholder="Address 1" required>
-  <input name="address2" type="text" class="w-full border p-2 rounded" placeholder="Address 2">
-  <input name="city" type="text" class="w-full border p-2 rounded" placeholder="City" required>
-  <input name="pincode" type="text" class="w-full border p-2 rounded" placeholder="Pincode" required>
+        <input name="address1" type="text" class="w-full border p-2 rounded" placeholder="Address 1" required>
+        <input name="address2" type="text" class="w-full border p-2 rounded" placeholder="Address 2">
+        <input name="city" type="text" class="w-full border p-2 rounded" placeholder="City" required>
+        <input name="pincode" type="text" class="w-full border p-2 rounded" placeholder="Pincode" required>
 
-  <!-- NEW: quantity and amount fields -->
-  <input name="quantity" type="number" min="1" value="1" class="w-full border p-2 rounded" placeholder="Quantity" required>
+        <input name="quantity" type="number" min="1" value="1" class="w-full border p-2 rounded" placeholder="Quantity" required>
 
-  <!-- amount can be auto-calculated in backend from item price * quantity, 
-       but if you want user to input manually, add this field -->
-  <input name="amount" type="number" step="0.01" min="0" class="w-full border p-2 rounded bg-gray-100 cursor-not-allowed" readonly required>
+        <input name="amount" type="number" step="0.01" min="0" class="w-full border p-2 rounded bg-gray-100 cursor-not-allowed" readonly required>
 
-  <button type="submit" class="w-full mt-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-    Submit Order
-  </button>
-</form>
+        <button type="submit" class="w-full mt-2 bg-[#0a3d62] hover:bg-[#083050] text-white px-4 py-2 rounded">
+          Submit Order
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- Description Modal -->
-  <div x-show="showDescription" x-cloak 
-       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-auto">
-    <div class="bg-white w-full max-w-md p-6 rounded shadow relative">
-      <button 
-        @click="showDescription = false" 
-        class="absolute top-2 right-2 text-gray-500 hover:text-black text-xl"
-        aria-label="Close"
-      >
-        ✖
-      </button>
-      <h3 class="text-lg font-bold mb-2 text-center">Description</h3>
-      <p class="whitespace-pre-wrap text-gray-800 text-sm" x-text="descriptionText"></p>
-    </div>
+  <!-- Floating Description Popup -->
+  <div 
+    x-show="showDescription" 
+    x-cloak 
+    x-ref="descPopup"
+    @click.outside="showDescription = false"
+    :style="{ top: popupY + 'px', left: popupX + 'px' }"
+    class="absolute bg-white border shadow-lg rounded-lg p-4 w-72 max-w-xs z-50"
+  >
+    <button 
+      @click="showDescription = false" 
+      class="absolute top-1 right-2 text-gray-500 hover:text-black text-lg"
+    >✖</button>
+    <p class="text-sm text-gray-800 whitespace-pre-wrap" x-text="descriptionText"></p>
   </div>
 
   <script>
@@ -173,24 +166,36 @@
         itemPrice: 0,
         showDescription: false,
         descriptionText: '',
+        popupX: 0,
+        popupY: 0,
+
         openBuyPopup(id, price) {
-  this.selectedItemId = id;
-  this.itemPrice = price;
-  this.showBuy = true;
-  this.$nextTick(() => {
-    const amountInput = document.querySelector('input[name="amount"]');
-    const quantityInput = document.querySelector('input[name="quantity"]');
-    const updateAmount = () => {
-      const qty = parseInt(quantityInput.value) || 1;
-      amountInput.value = (qty * this.itemPrice).toFixed(2);
-    };
-    quantityInput.addEventListener('input', updateAmount);
-    updateAmount();
-  });
-},
-        openDescriptionPopup(desc) {
+          this.selectedItemId = id;
+          this.itemPrice = price;
+          this.showBuy = true;
+          this.$nextTick(() => {
+            const amountInput = document.querySelector('input[name="amount"]');
+            const quantityInput = document.querySelector('input[name="quantity"]');
+            const updateAmount = () => {
+              const qty = parseInt(quantityInput.value) || 1;
+              amountInput.value = (qty * this.itemPrice).toFixed(2);
+            };
+            quantityInput.addEventListener('input', updateAmount);
+            updateAmount();
+          });
+        },
+
+        openDescriptionPopup(event, desc) {
           this.descriptionText = desc;
           this.showDescription = true;
+
+          // calculate position
+          const rect = event.target.getBoundingClientRect();
+          const scrollY = window.scrollY || document.documentElement.scrollTop;
+          const scrollX = window.scrollX || document.documentElement.scrollLeft;
+
+          this.popupX = rect.left + scrollX;
+          this.popupY = rect.bottom + scrollY + 5;
         }
       };
     }

@@ -1,46 +1,43 @@
-<!-- Hamburger Button fixed top-left -->
-<button
-  x-data
-  @click="$dispatch('toggle-sidebar')"
-  class="fixed top-4 left-4 z-50 md:hidden flex flex-col space-y-1 focus:outline-none bg-gray-900 p-2 rounded"
-  aria-label="Toggle sidebar"
->
-  <span class="block w-6 h-0.5 bg-white rounded"></span>
-  <span class="block w-6 h-0.5 bg-white rounded"></span>
-  <span class="block w-6 h-0.5 bg-white rounded"></span>
-</button>
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yash Cyber Cafe</title>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="h-full">
 
-<!-- Profile Dropdown fixed top-right -->
-<div
-  class="fixed top-4 right-4 z-50"
-  x-data="{ openProfile: false }"
-  @keydown.escape.window="openProfile = false"
->
-  <button @click="openProfile = !openProfile" class="focus:outline-none">
-    {% if user.profile_image %}
-    <img
-      src="{{ url_for('static', filename='uploads/' + user.profile_image) }}"
-      alt="Profile"
-      class="w-10 h-10 rounded-full border border-gray-300 object-cover"
-    />
-    {% else %}
-    <img
-      src="/static/images/profile.png"
-      alt="Default"
-      class="w-10 h-10 rounded-full border border-gray-300"
-    />
-    {% endif %}
-  </button>
+<!-- TOPBAR -->
+<div class="fixed top-0 left-0 w-full text-white flex items-center justify-between px-4 py-3 z-50 md:px-6 shadow" style="background-color: #0a3d62;">
+  <div class="flex items-center space-x-3">
+    <!-- Hamburger Button (Mobile Only) -->
+    <button
+      x-data
+      @click="$dispatch('toggle-sidebar')"
+      class="md:hidden flex flex-col space-y-1 focus:outline-none bg-gray-800 p-2 rounded"
+      aria-label="Toggle sidebar"
+    >
+      <span class="block w-6 h-0.5 bg-white rounded"></span>
+      <span class="block w-6 h-0.5 bg-white rounded"></span>
+      <span class="block w-6 h-0.5 bg-white rounded"></span>
+    </button>
+    <!-- Logo + Title -->
+    <img src="/static/images/login-icon.png" alt="Logo" class="w-12 h-12 rounded-full" />
+     <div class="flex flex-col leading-tight">
+  <span class="text-lg font-bold text-white">Yash Cyber Cafe</span>
+  <span class="text-xs text-gray-300">Your Digital Gateway</span>
+</div>
+</div>
 
-  <!-- Dropdown menu -->
+  <!-- Profile Dropdown -->
   <div
-    x-show="openProfile"
-    @click.away="openProfile = false"
-    x-transition
-    class="absolute mt-2 right-0 w-72 bg-white text-black rounded-xl shadow-lg p-4"
-    x-cloak
+    class="relative"
+    x-data="{ openProfile: false }"
+    @keydown.escape.window="openProfile = false"
   >
-    <div class="flex items-center space-x-3 mb-4">
+    <button @click="openProfile = !openProfile" class="focus:outline-none">
       {% if user.profile_image %}
       <img
         src="{{ url_for('static', filename='uploads/' + user.profile_image) }}"
@@ -54,51 +51,56 @@
         class="w-10 h-10 rounded-full border border-gray-300"
       />
       {% endif %}
-      <div>
-        <div class="font-semibold text-gray-900">{{ user.name }}</div>
-        <div class="text-sm text-gray-500">{{ user.email }}</div>
-      </div>
-    </div>
+    </button>
 
-    <div class="border-t border-gray-200 pt-2 flex justify-between">
-      <a
-        href="/account"
-        class="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded space-x-2 w-1/2"
-      >
-        <svg
-          class="w-4 h-4 text-gray-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+    <!-- Dropdown menu -->
+    <div
+      x-show="openProfile"
+      @click.away="openProfile = false"
+      x-transition
+      class="absolute mt-2 right-0 w-72 bg-white text-black rounded-xl shadow-lg p-4"
+      x-cloak
+    >
+      <div class="flex items-center space-x-3 mb-4">
+        {% if user.profile_image %}
+        <img
+          src="{{ url_for('static', filename='uploads/' + user.profile_image) }}"
+          alt="Profile"
+          class="w-10 h-10 rounded-full border border-gray-300 object-cover"
+        />
+        {% else %}
+        <img
+          src="/static/images/profile.png"
+          alt="Default"
+          class="w-10 h-10 rounded-full border border-gray-300"
+        />
+        {% endif %}
+        <div>
+          <div class="font-semibold text-gray-900">{{ user.name }}</div>
+          <div class="text-sm text-gray-500">{{ user.email }}</div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-200 pt-2 flex justify-between">
+        <a
+          href="/account"
+          class="flex items-center px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded space-x-2 w-1/2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M5.121 17.804A4 4 0 016.343 16H9a4 4 0 004-4V8a4 4 0 00-4-4H6.343a4 4 0 00-1.222.196M15 12h6"
-          />
-        </svg>
-        <span>Account</span>
-      </a>
-      <a
-        href="/logout"
-        class="flex items-center justify-end px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded space-x-2 w-1/2"
-      >
-        <span>Sign out</span>
-        <svg
-          class="w-4 h-4 text-red-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 016.343 16H9a4 4 0 004-4V8a4 4 0 00-4-4H6.343a4 4 0 00-1.222.196M15 12h6" />
+          </svg>
+          <span>Account</span>
+        </a>
+        <a
+          href="/logout"
+          class="flex items-center justify-end px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded space-x-2 w-1/2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 11-4 0v-1m0-8V7a2 2 0 114 0v1"
-          />
-        </svg>
-      </a>
+          <span>Sign out</span>
+          <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 11-4 0v-1m0-8V7a2 2 0 114 0v1" />
+          </svg>
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -108,83 +110,53 @@
   x-data="{ sidebarOpen: window.innerWidth >= 768 }"
   x-on:toggle-sidebar.window="sidebarOpen = !sidebarOpen"
   :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed top-0 left-0 z-40 w-64 bg-gray-900 text-white min-h-screen flex flex-col justify-between transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto"
-  xmlns:x="http://www.w3.org/1999/xhtml"
-  @keydown.window.escape="sidebarOpen = false"
-  aria-label="Sidebar"
->
+  class="fixed top-0 left-0 z-40 w-56 text-white min-h-screen flex flex-col justify-between transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto pt-16" 
+     style="background-color: #145fa8;" 
+     aria-label="Sidebar">
   <div>
-    <div class="p-4 font-bold text-xl border-b border-gray-700">YCC</div>
-    <div class="p-4 border-b border-gray-700">Welcome {{ short_name }}</div>
-
-    <nav class="text-sm">
-      <ul class="space-y-2 p-4">
-        <li class="text-gray-400 uppercase text-xs">Dashboard</li>
+    <nav class="text-base"> <!-- Reduced text size -->
+      <ul class="space-y-3 p-4">
         <li>
-          <a
-            href="/home"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/home' else '' }}"
-          >
+          <a href="/home" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/home' else '' }}">
             <span>🏠</span><span>Home</span>
           </a>
         </li>
         {% if user.role == 'admin' %}
         <li>
-          <a
-            href="/orders"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/orders' else '' }}"
-          >
+          <a href="/orders" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/orders' else '' }}">
             <span>📅</span><span>Orders</span>
           </a>
         </li>
         <li>
-          <a
-            href="/sales"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/sales' else '' }}"
-          >
+          <a href="/sales" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/sales' else '' }}">
             <span>💰</span><span>Sales</span>
           </a>
         </li>
         <li>
-          <a
-            href="/catalog"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/catalog' else '' }}"
-          >
+          <a href="/catalog" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/catalog' else '' }}">
             <span>📚</span><span>Catalog</span>
           </a>
         </li>
         <li>
-          <a
-            href="/inbox"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/inbox' else '' }}"
-          >
+          <a href="/inbox" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/inbox' else '' }}">
             <span>📬</span><span>Inbox</span>
           </a>
         </li>
         {% endif %}
         {% if user.role == 'user' %}
         <li>
-          <a
-            href="/my_orders"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/my_orders' else '' }}"
-          >
+          <a href="/my_orders" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/my_orders' else '' }}">
             <span>📅</span><span>My Orders</span>
           </a>
         </li>
         <li>
-          <a
-            href="/contact"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/contact' else '' }}"
-          >
+          <a href="/contact" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/contact' else '' }}">
             <span>📬</span><span>Contact us</span>
           </a>
         </li>
         {% endif %}
         <li>
-          <a
-            href="/settings"
-            class="flex items-center space-x-2 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/settings' else '' }}"
-          >
+          <a href="/settings" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/settings' else '' }}">
             <span>⚙️</span><span>Settings</span>
           </a>
         </li>
@@ -192,5 +164,5 @@
     </nav>
   </div>
 </aside>
-
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</body>
+</html>
