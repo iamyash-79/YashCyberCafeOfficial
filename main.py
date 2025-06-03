@@ -1,19 +1,32 @@
-from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify, current_app
-import sqlite3
-import os
-import json
+from flask import Flask, render_template, request, g, redirect, session, url_for, flash, jsonify, current_app
+import sqlite3, os, json
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
+app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, 'user.db')
+
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(DATABASE, timeout=10)
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+@app.teardown_appcontext
+def close_db(error):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
 @app.context_processor
 def inject_user():
@@ -23,11 +36,16 @@ UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+def utc_to_local(utc_str):
+    utc_time = datetime.strptime(utc_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ZoneInfo("UTC"))
+    local_time = utc_time.astimezone(ZoneInfo("Asia/Kolkata"))
+    return local_time.strftime("%d/%m/%y %I:%M %p")
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_user_db():
-    conn = sqlite3.connect('user.db', timeout=10)  # Added timeout to help with locking
+    conn = sqlite3.connect(DATABASE, timeout=10)  # Added timeout to help with locking
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -41,7 +59,7 @@ def get_user():
         return None
     conn = get_user_db()
     row = conn.execute(
-        "SELECT id, first_name, last_name, email, profile_image, role, mobile FROM users WHERE email = ?",
+        "SELECT id, first_name, last_name, email, profile_image, role, contact FROM users WHERE email = ?",
         (session["user"],)
     ).fetchone()
     conn.close()
@@ -54,16 +72,20 @@ def get_user():
             "email": row['email'],
             "profile_image": row['profile_image'],
             "role": row['role'],
-            "contact": row['mobile'],
+            "contact": row['contact'],
             "short_name": row['first_name']
         }
     return None
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route("/home")
 def home():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     conn = get_catalog_db()
     cursor = conn.execute("SELECT id, name, description, price, discount_price, images FROM catalog")
@@ -90,7 +112,7 @@ def home():
 def my_orders():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     conn = get_catalog_db()
     cursor = conn.execute(
@@ -108,7 +130,7 @@ def submit_order(item_id):
     user = get_user()
     if not user:
         flash("Login required to submit an order", "error")
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     # Get form data
     name = request.form.get('name')
@@ -217,7 +239,7 @@ def cancel_order(order_id):
     user = get_user()
     if not user:
         flash("Unauthorized", "error")
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     conn = get_catalog_db()
     order = conn.execute("SELECT user_email FROM orders WHERE id = ?", (order_id,)).fetchone()
@@ -268,7 +290,7 @@ def mark_paid(order_id):
     user = get_user()
     if not user:
         flash("Unauthorized access.", "error")
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     conn = get_catalog_db()
     order = conn.execute("SELECT id, user_email FROM orders WHERE id = ?", (order_id,)).fetchone()
@@ -314,7 +336,7 @@ def delete_order(order_id):
 def sales():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     conn = get_catalog_db()
     total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
@@ -338,7 +360,7 @@ def sales():
 def catalog():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     short_name = user.get("short_name", "Guest")
 
@@ -504,7 +526,7 @@ def delete_catalog(item_id):
 def inbox():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     conn = get_catalog_db()
 
@@ -522,7 +544,7 @@ def inbox():
 
         # Connect to user.db for user names
         user_info_list = []
-        user_db = sqlite3.connect('user.db')
+        user_db = sqlite3.connect(DATABASE)
         user_db.row_factory = sqlite3.Row
 
         for email in user_emails:
@@ -646,7 +668,7 @@ def clear_chat():
 def contact():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     if request.method == "POST":
         message_text = request.form.get("message", "").strip()
@@ -771,7 +793,7 @@ def chat_with_user(user_email):
     user = get_user()
     if not user or user['role'] != 'admin':
         flash("Unauthorized access.", "error")
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     conn = get_catalog_db()
     messages = conn.execute(
@@ -786,14 +808,33 @@ def chat_with_user(user_email):
 def settings():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
     return render_template("settings.html", user=user, short_name=user.get("short_name"))
+
+@app.route("/delete-account", methods=["POST"])
+def delete_account():
+    user = get_user()
+    if not user:
+        return redirect(url_for("index"))
+
+    email = user["email"]
+    if email == "admin@example.com":
+        return redirect(url_for("account_settings", admin_delete_blocked=1))
+
+    conn = sqlite3.connect("user.db")
+    conn.execute("DELETE FROM users WHERE email = ?", (email,))
+    conn.commit()
+    conn.close()
+
+    session.pop("user", None)
+    flash("Your account has been deleted.", "success")
+    return redirect(url_for("register"))
 
 @app.route("/account", methods=["GET", "POST"])
 def account_settings():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     if request.method == "POST":
         first_name = request.form.get("first_name")
@@ -804,18 +845,19 @@ def account_settings():
 
         if 'remove_image' in request.form:
             cur.execute("UPDATE users SET profile_image = NULL WHERE email = ?", (user["email"],))
-        elif 'image' in request.files:
-            image = request.files['image']
-            if image and allowed_file(image.filename):
-                filename = secure_filename(image.filename)
-                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                cur.execute("UPDATE users SET profile_image = ? WHERE email = ?", (filename, user["email"]))
+
+        image = request.files.get("image")
+        if image and allowed_file(image.filename):
+            filename = secure_filename(image.filename)
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            cur.execute("UPDATE users SET profile_image = ? WHERE email = ?", (filename, user["email"]))
 
         cur.execute(
             "UPDATE users SET first_name = ?, last_name = ? WHERE email = ?", 
             (first_name, last_name, user["email"])
         )
+
         conn.commit()
         conn.close()
 
@@ -828,7 +870,7 @@ def account_settings():
 def change_password():
     user = get_user()
     if not user:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     old_pw = request.form.get("old_password")
     new_pw = request.form.get("new_password")
@@ -852,25 +894,6 @@ def change_password():
 
     return redirect(url_for("account_settings"))
 
-@app.route("/delete-account", methods=["POST"])
-def delete_account():
-    user = get_user()
-    if not user:
-        return redirect(url_for("login"))
-
-    email = user["email"]
-    if email == "admin@example.com":
-        return redirect(url_for("account_settings", admin_delete_blocked=1))
-
-    conn = sqlite3.connect("user.db")
-    conn.execute("DELETE FROM users WHERE email = ?", (email,))
-    conn.commit()
-    conn.close()
-
-    session.pop("user", None)
-    flash("Your account has been deleted.", "success")
-    return redirect(url_for("register"))
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -878,61 +901,61 @@ def login():
         password = request.form.get("password")
         role = request.form.get("role")
 
-        conn = sqlite3.connect('user.db')
+        conn = sqlite3.connect(DATABASE)
         user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         conn.close()
 
         if not user or not check_password_hash(user[5], password):
             flash("Invalid email or password", "error")
-            return redirect(url_for("login"))
+            return redirect(url_for("index"))
 
         db_role = user[7] if len(user) > 7 else "user"
         if role == "admin" and db_role != "admin":
             flash("You are not authorized to log in as Admin.", "error")
-            return redirect(url_for("login"))
+            return redirect(url_for("index"))
 
         session["user"] = email
         return redirect(url_for("home"))
 
-    return render_template("login.html")
+    return render_template("index.html")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         first_name = request.form.get("first_name")
         last_name = request.form.get("last_name")
-        mobile = request.form.get("mobile")
+        contact = request.form.get("contact")
         email = request.form.get("email")
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
         if password != confirm_password:
-            flash("Passwords do not match", "error")
-            return render_template("register.html")
+            flash("Passwords do not match", "register_error")
+            return redirect(url_for("index"))
 
         hashed_pw = generate_password_hash(password)
 
-        conn = sqlite3.connect('user.db')
         try:
+            conn = sqlite3.connect(DATABASE)
             conn.execute(
-                "INSERT INTO users (first_name, last_name, mobile, email, password, role) VALUES (?, ?, ?, ?, ?, ?)",
-                (first_name, last_name, mobile, email, hashed_pw, 'user')
+                "INSERT INTO users (first_name, last_name, contact, email, password, role) VALUES (?, ?, ?, ?, ?, ?)",
+                (first_name, last_name, contact, email, hashed_pw, 'user')
             )
             conn.commit()
-            flash("Registration successful. Please login.", "success")
-            return redirect(url_for("login"))
+            flash("Registration successful. Please login.", "register_success")
         except sqlite3.IntegrityError:
-            flash("Email already registered.", "error")
-            return render_template("register.html")
+            flash("Email already registered.", "register_error")
         finally:
             conn.close()
 
-    return render_template("register.html")
+        return redirect(url_for("index"))
+
+    return redirect(url_for("index"))
 
 @app.route("/logout")
 def logout():
     session.pop("user", None)
-    return redirect(url_for("login"))
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(debug=True)
