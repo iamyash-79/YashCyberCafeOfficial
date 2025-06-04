@@ -246,7 +246,7 @@
       handlePayment(orderId) {
         const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
         const upiLink = document.querySelector('#upi-link')?.getAttribute('href');
-        const qrImageUrl = "/static/qrcodes/pay.jpg";
+        const qrImageUrl = "/static/images/qr.jpg";
 
         if (isMobile && upiLink) {
           window.location.href = upiLink;
