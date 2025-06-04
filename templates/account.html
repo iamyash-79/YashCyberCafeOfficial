@@ -17,50 +17,87 @@
     <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden">
       <h1 class="text-3xl font-bold mb-6 text-gray-800">Account Settings</h1>
 
-  <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-xl shadow space-y-6">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <!-- Left Side: Names -->
-    <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700">First name</label>
-        <input type="text" name="first_name" value="{{ user.first_name }}"
-               class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-               required />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Last name</label>
-        <input type="text" name="last_name" value="{{ user.last_name }}"
-               class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-               required />
-      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="my-4">
+      {% for category, message in messages %}
+        <div class="px-4 py-2 rounded mb-2
+          {% if category == 'success' %} bg-green-100 text-green-700
+          {% elif category == 'error' %} bg-red-100 text-red-700
+          {% else %} bg-gray-100 text-gray-700 {% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
     </div>
+  {% endif %}
+{% endwith %}
 
-    <!-- Right Side: Profile Image -->
-    <div class="flex flex-col items-center justify-center space-y-2">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
-      <label for="image-upload" class="cursor-pointer">
-        {% if user.profile_image %}
-          <img src="{{ url_for('static', filename='images/' + user.profile_image) }}"
-               alt="Profile Photo"
-               class="w-24 h-24 rounded-full border border-gray-300 object-cover" />
-        {% else %}
-          <div class="w-24 h-24 rounded-full border border-gray-300 bg-gray-100 flex items-center justify-center text-gray-500">Upload</div>
-        {% endif %}
-      </label>
-      <input type="file" name="image" id="image-upload" class="hidden" />
-      {% if user.profile_image %}
-        <button name="remove_image" value="1" class="text-red-500 text-sm hover:underline">Remove Photo</button>
-      {% endif %}
-    </div>
-  </div>
+      <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-xl shadow space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          
+          <!-- Left Side: Form Fields -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">First name</label>
+              <input type="text" name="first_name" value="{{ user.first_name }}"
+                     class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Last name</label>
+              <input type="text" name="last_name" value="{{ user.last_name }}"
+                     class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Gender</label>
+              <select name="gender_id"
+                      class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required>
+                <option value="1" {% if user.gender_id|int == 1 or not user.gender_id %}selected{% endif %}>Male</option>
+                <option value="2" {% if user.gender_id|int == 2 %}selected{% endif %}>Female</option>
+                <option value="3" {% if user.gender_id|int == 3 %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+            <div>
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">
+                Save Changes
+              </button>
+            </div>
+          </div>
 
-  <!-- Save Button -->
-  <div>
-    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">
-      Save Changes
-    </button>
-  </div>
-</form>
+          <!-- Right Side: Profile Image -->
+          <div class="relative w-full flex justify-center">
+            <label for="image-upload" class="cursor-pointer relative group">
+              {% if user.profile_image %}
+                <img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}"
+                     alt="Profile Photo"
+                     class="w-32 h-32 rounded-full border border-gray-300 object-cover" />
+              {% else %}
+                {% if user.gender_id|int == 2 %}
+                  <img src="{{ url_for('static', filename='images/default_female.png') }}"
+                       alt="Default Female Profile Photo"
+                       class="w-32 h-32 rounded-full border border-gray-300 object-cover" />
+                {% else %}
+                  <img src="{{ url_for('static', filename='images/default_male.png') }}"
+                       alt="Default Male Profile Photo"
+                       class="w-32 h-32 rounded-full border border-gray-300 object-cover" />
+                {% endif %}
+              {% endif %}
+              <!-- Edit icon overlay -->
+              <div class="absolute bottom-1 right-1 bg-white rounded-full p-1 shadow group-hover:scale-110 transition-transform">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z" />
+                </svg>
+              </div>
+            </label>
+            <input type="file" name="image" id="image-upload" class="hidden" />
+            {% if user.profile_image %}
+              <button name="remove_image" value="1" class="absolute top-full mt-2 text-red-500 text-sm hover:underline">Remove Photo</button>
+            {% endif %}
+          </div>
+        </div>
+      </form>
 
       <!-- Login Info -->
       <div class="mt-10 bg-white p-6 rounded-xl shadow space-y-4">
@@ -68,7 +105,7 @@
         <div class="text-sm space-y-2">
           <div>
             <label class="block text-sm font-medium text-gray-700">Email</label>
-            <p class="mt-1 text-gray-600">{{ user[2] }}</p>
+            <p class="mt-1 text-gray-600">{{ user.email }}</p>
           </div>
           <div class="flex items-center justify-between">
             <div>
@@ -96,5 +133,7 @@
         </div>
       </div>
 
+    </main>
+  </div>
 </body>
 </html>
