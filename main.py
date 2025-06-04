@@ -59,13 +59,13 @@ def get_user():
         return None
     conn = get_user_db()
     row = conn.execute(
-        "SELECT id, first_name, last_name, email, profile_image, role, contact FROM users WHERE email = ?",
+        "SELECT id, first_name, last_name, email, profile_image, role, contact, gender_id FROM users WHERE email = ?",
         (session["user"],)
     ).fetchone()
     conn.close()
     if row:
         return {
-            "id": row["id"],                # <-- add this line
+            "id": row["id"],
             "name": f"{row['first_name']} {row['last_name']}",
             "first_name": row['first_name'],
             "last_name": row['last_name'],
@@ -73,7 +73,8 @@ def get_user():
             "profile_image": row['profile_image'],
             "role": row['role'],
             "contact": row['contact'],
-            "short_name": row['first_name']
+            "short_name": row['first_name'],
+            "gender_id": row['gender_id']  # ✅ Added this line
         }
     return None
 
@@ -839,6 +840,7 @@ def account_settings():
     if request.method == "POST":
         first_name = request.form.get("first_name")
         last_name = request.form.get("last_name")
+        gender_id = request.form.get("gender_id", 1)  # default to Male (1)
 
         conn = sqlite3.connect("user.db")
         cur = conn.cursor()
@@ -854,15 +856,16 @@ def account_settings():
             cur.execute("UPDATE users SET profile_image = ? WHERE email = ?", (filename, user["email"]))
 
         cur.execute(
-            "UPDATE users SET first_name = ?, last_name = ? WHERE email = ?", 
-            (first_name, last_name, user["email"])
+            "UPDATE users SET first_name = ?, last_name = ?, gender_id = ? WHERE email = ?", 
+            (first_name, last_name, gender_id, user["email"])
         )
 
         conn.commit()
         conn.close()
 
         flash("Account updated successfully.", "success")
-        user = get_user()
+        # Redirect after POST to avoid form resubmission and flash showing on wrong page
+        return redirect(url_for("account_settings"))
 
     return render_template("account.html", user=user)
 
@@ -894,30 +897,27 @@ def change_password():
 
     return redirect(url_for("account_settings"))
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["POST"])  # sirf POST hi kare login attempt
 def login():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-        role = request.form.get("role")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    role = request.form.get("role")
 
-        conn = sqlite3.connect(DATABASE)
-        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        conn.close()
+    conn = sqlite3.connect(DATABASE)
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
 
-        if not user or not check_password_hash(user[5], password):
-            flash("Invalid email or password", "error")
-            return redirect(url_for("index"))
+    if not user or not check_password_hash(user[5], password):
+        flash("Invalid email or password", "error")
+        return redirect(url_for("index", login_error=1))  # extra query param
 
-        db_role = user[7] if len(user) > 7 else "user"
-        if role == "admin" and db_role != "admin":
-            flash("You are not authorized to log in as Admin.", "error")
-            return redirect(url_for("index"))
+    db_role = user[7] if len(user) > 7 else "user"
+    if role == "admin" and db_role != "admin":
+        flash("You are not authorized to log in as Admin.", "error")
+        return redirect(url_for("index", login_error=1))
 
-        session["user"] = email
-        return redirect(url_for("home"))
-
-    return render_template("index.html")
+    session["user"] = email
+    return redirect(url_for("home"))
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
