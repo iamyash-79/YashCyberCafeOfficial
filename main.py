@@ -55,28 +55,53 @@ def get_catalog_db():
     return conn
 
 def get_user():
-    if "user" not in session:
+    user = session.get("user")
+    if not user or not isinstance(user, dict):
         return None
-    conn = get_user_db()
+
+    user_email = user.get("email")
+    if not user_email:
+        return None
+
+    conn = get_db()
     row = conn.execute(
-        "SELECT id, first_name, last_name, email, profile_image, role, contact, gender_id FROM users WHERE email = ?",
-        (session["user"],)
+        "SELECT id, full_name, email, profile_image, role, contact, gender_id FROM users WHERE email = ?",
+        (user_email,)
     ).fetchone()
-    conn.close()
+
     if row:
         return {
             "id": row["id"],
-            "name": f"{row['first_name']} {row['last_name']}",
-            "first_name": row['first_name'],
-            "last_name": row['last_name'],
+            "name": row['full_name'],
+            "full_name": row['full_name'],
             "email": row['email'],
             "profile_image": row['profile_image'],
             "role": row['role'],
             "contact": row['contact'],
-            "short_name": row['first_name'],
-            "gender_id": row['gender_id']  # ✅ Added this line
+            "short_name": row['full_name'],
+            "gender_id": row['gender_id']
         }
     return None
+
+def handle_login(expected_role):
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    conn = get_user_db()
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    conn.close()
+
+    if user and check_password_hash(user["password"], password):
+        if user["role"] != expected_role:
+            flash("Invalid login for this portal.", "error")
+            return redirect(request.path)
+
+        session["user_id"] = user["id"]
+        flash("Logged in successfully!", "success")
+        return redirect(url_for("dashboard"))  # Same dashboard
+
+    flash("Invalid credentials", "error")
+    return redirect(request.path)
 
 @app.route('/')
 def index():
@@ -89,6 +114,8 @@ def home():
         return redirect(url_for("index"))
 
     conn = get_catalog_db()
+
+    # Fetch catalog items
     cursor = conn.execute("SELECT id, name, description, price, discount_price, images FROM catalog")
     catalog_items = []
     for row in cursor.fetchall():
@@ -96,7 +123,6 @@ def home():
             images = json.loads(row["images"]) if row["images"] else []
         except Exception:
             images = []
-
         catalog_items.append({
             'id': row['id'],
             'name': row['name'],
@@ -105,9 +131,24 @@ def home():
             'discount_price': row['discount_price'],
             'images': images
         })
+
+    # Fetch last used address
+    last_order = conn.execute("""
+        SELECT address1, address2, city, pincode 
+        FROM orders 
+        WHERE user_email = ? 
+        ORDER BY id DESC LIMIT 1
+    """, (user['email'],)).fetchone()
+
     conn.close()
 
-    return render_template("home.html", user=user, short_name=user["short_name"], catalog_items=catalog_items)
+    return render_template(
+        "home.html",
+        user=user,
+        short_name=user["short_name"],
+        catalog_items=catalog_items,
+        last_order=last_order
+    )
 
 @app.route("/my_orders")
 def my_orders():
@@ -187,9 +228,9 @@ def submit_order(item_id):
 @app.route("/orders")
 def orders():
     user = get_user()
-    if not user or user.get('role') != 'admin':
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("home"))
+    if not user:
+        flash("Please log in to view orders.", "error")
+        return redirect(url_for("index"))  # or your login page
 
     status_filter = request.args.get("status")
     date_filter = request.args.get("date")
@@ -223,7 +264,7 @@ def orders():
 @app.route('/accept_order/<int:order_id>', methods=['POST'])
 def accept_order(order_id):
     user = get_user()
-    if not user or user.get('role') != 'admin':
+    if not user or user.get('role') not in ('admin', 'owner'):
         flash("Unauthorized", "error")
         return redirect(url_for('home'))
 
@@ -249,7 +290,8 @@ def cancel_order(order_id):
         conn.close()
         return redirect(url_for('home'))
 
-    if user['email'] != order['user_email'] and user.get('role') != 'admin':
+    # Allow if user is owner of the order or role is admin or owner
+    if user['email'] != order['user_email'] and user.get('role') not in ('admin', 'owner'):
         flash("Unauthorized to cancel this order.", "error")
         conn.close()
         return redirect(url_for('home'))
@@ -259,12 +301,13 @@ def cancel_order(order_id):
     conn.close()
 
     flash("Order cancelled.", "success")
-    return redirect(url_for('orders') if user.get('role') == 'admin' else url_for('my_orders'))
+    # Redirect admins/owners to all orders, others to their orders
+    return redirect(url_for('orders') if user.get('role') in ('admin', 'owner') else url_for('my_orders'))
 
 @app.route('/deliver_order/<int:order_id>', methods=['POST'])
 def deliver_order(order_id):
     user = get_user()
-    if not user or user.get('role') != 'admin':
+    if not user or user.get('role') not in ('admin', 'owner'):
         flash("Unauthorized access.", "error")
         return redirect(url_for("home"))
 
@@ -301,8 +344,8 @@ def mark_paid(order_id):
         conn.close()
         return redirect(url_for("home"))
 
-    # Only admin or order owner can mark as paid
-    if user.get('role') != 'admin' and user['email'] != order['user_email']:
+    # Allow if user role is admin or owner, or user is the order owner
+    if user.get('role') not in ('admin', 'owner') and user['email'] != order['user_email']:
         flash("Unauthorized access.", "error")
         conn.close()
         return redirect(url_for("home"))
@@ -313,7 +356,8 @@ def mark_paid(order_id):
 
     flash("Order marked as paid.", "success")
 
-    if user.get('role') == 'admin':
+    # Redirect admins and owners to all orders, others to their own orders
+    if user.get('role') in ('admin', 'owner'):
         return redirect(url_for("orders"))
     else:
         return redirect(url_for("my_orders"))
@@ -321,7 +365,7 @@ def mark_paid(order_id):
 @app.route('/delete_order/<int:order_id>', methods=['POST'])
 def delete_order(order_id):
     user = get_user()
-    if not user or user.get('role') != 'admin':
+    if not user or user.get('role') not in ('admin', 'owner'):
         flash("Unauthorized", "error")
         return redirect(url_for('home'))
 
@@ -428,7 +472,7 @@ def catalog():
 @app.route('/edit_catalog/<int:item_id>', methods=['POST'])
 def edit_catalog(item_id):
     user = get_user()
-    if not user or user.get("role") != "admin":
+    if not user or user.get("role") not in ["admin", "owner"]:
         flash("Unauthorized", "error")
         return redirect(url_for("home"))
 
@@ -500,7 +544,7 @@ def edit_catalog(item_id):
 @app.route('/delete_catalog/<int:item_id>', methods=['POST'])
 def delete_catalog(item_id):
     user = get_user()
-    if not user or user.get("role") != "admin":
+    if not user or user.get("role") not in ["admin", "owner"]:
         flash("Unauthorized action.", "error")
         return redirect(url_for("home"))
 
@@ -508,9 +552,16 @@ def delete_catalog(item_id):
     cur = conn.cursor()
 
     images_row = cur.execute("SELECT images FROM catalog WHERE id = ?", (item_id,)).fetchone()
-    if images_row:
-        image_list = images_row[0].split(',')
+    if images_row and images_row[0]:
+        # images stored as JSON string, safer to load as JSON if possible
+        try:
+            image_list = json.loads(images_row[0])
+        except Exception:
+            # fallback if not JSON, assume comma-separated string
+            image_list = images_row[0].split(',')
+
         for img_filename in image_list:
+            img_filename = img_filename.strip()
             if img_filename:
                 img_path = os.path.join(app.root_path, 'static/uploads', img_filename)
                 if os.path.exists(img_path):
@@ -531,8 +582,8 @@ def inbox():
 
     conn = get_catalog_db()
 
-    if user['role'] == 'admin':
-        # Admin sees distinct users they've messaged or received messages from
+    if user['role'] in ('admin', 'owner'):
+        # Get distinct user emails they've messaged or received messages from
         users_sent = conn.execute(
             "SELECT DISTINCT receiver_email FROM messages WHERE sender_email = ?", (user['email'],)
         ).fetchall()
@@ -540,29 +591,21 @@ def inbox():
             "SELECT DISTINCT sender_email FROM messages WHERE receiver_email = ?", (user['email'],)
         ).fetchall()
 
-        user_emails = set([row['receiver_email'] for row in users_sent]) | set([row['sender_email'] for row in users_received])
+        user_emails = set(row['receiver_email'] for row in users_sent) | set(row['sender_email'] for row in users_received)
         user_emails.discard(user['email'])
 
-        # Connect to user.db for user names
         user_info_list = []
         user_db = sqlite3.connect(DATABASE)
         user_db.row_factory = sqlite3.Row
 
         for email in user_emails:
             user_info = user_db.execute(
-                "SELECT first_name, last_name FROM users WHERE email = ?", (email,)
+                "SELECT full_name FROM users WHERE email = ?", (email,)
             ).fetchone()
             if user_info:
-                # Check if any unread messages from this user
-                unread = conn.execute(
-                    "SELECT COUNT(*) as unread_count FROM messages WHERE sender_email = ? AND receiver_email = ? AND is_read = 0",
-                    (email, user['email'])
-                ).fetchone()['unread_count'] > 0
-
                 user_info_list.append({
-                    "name": f"{user_info['first_name']} {user_info['last_name']}",
-                    "email": email,
-                    "has_unread": unread
+                    "name": user_info['full_name'],
+                    "email": email
                 })
 
         user_db.close()
@@ -570,100 +613,10 @@ def inbox():
         return render_template("inbox.html", user=user, short_name=user.get("short_name"), user_list=user_info_list)
 
     else:
-        # Regular user sees their chat
-        messages = conn.execute(
-            "SELECT * FROM messages WHERE sender_email = ? OR receiver_email = ? ORDER BY timestamp",
-            (user['email'], user['email'])
-        ).fetchall()
+        # Regular users: no chat, no messages, just simple info page
         conn.close()
-        return render_template("chat.html", user=user, short_name=user.get("short_name"), messages=messages)
-
-@app.route("/api/messages/<email>")
-def get_messages(email):
-    user = get_user()
-    if not user:
-        return jsonify([])
-
-    conn = get_catalog_db()
-    cursor = conn.cursor()
-
-    # Fetch messages between current user and selected user
-    messages = cursor.execute(
-        "SELECT * FROM messages WHERE (sender_email = ? AND receiver_email = ?) OR (sender_email = ? AND receiver_email = ?) ORDER BY timestamp",
-        (user['email'], email, email, user['email'])
-    ).fetchall()
-
-    # If admin is viewing, mark messages received from user as read
-    if user['role'] == 'admin':
-        cursor.execute(
-            "UPDATE messages SET is_read = 1 WHERE sender_email = ? AND receiver_email = ? AND is_read = 0",
-            (email, user['email'])
-        )
-        conn.commit()
-
-    conn.close()
-    return jsonify([dict(msg) for msg in messages])
-
-@app.route('/api/messages', methods=['GET', 'POST'])
-def api_messages():
-    user = get_user()
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    conn = get_catalog_db()
-    admin_email = "admin@example.com"  # Your admin email
-
-    if request.method == 'GET':
-        messages = conn.execute(
-            """
-            SELECT * FROM messages 
-            WHERE (sender_email = ? AND receiver_email = ?)
-               OR (sender_email = ? AND receiver_email = ?)
-            ORDER BY timestamp
-            """,
-            (user['email'], admin_email, admin_email, user['email'])
-        ).fetchall()
-        conn.close()
-        return jsonify([dict(row) for row in messages])
-
-    elif request.method == 'POST':
-        data = request.get_json()
-        message_text = data.get('message')
-        receiver_email = data.get('receiver_email')
-        if not message_text or not receiver_email:
-            conn.close()
-            return jsonify({"error": "Missing message or receiver"}), 400
-
-        conn.execute(
-            "INSERT INTO messages (sender_email, receiver_email, message, timestamp) VALUES (?, ?, ?, datetime('now'))",
-            (user['email'], receiver_email, message_text)
-        )
-        conn.commit()
-        conn.close()
-        return jsonify({"success": True})
-
-@app.route('/api/messages/clear', methods=['POST'])
-def clear_chat():
-    user = get_user()
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    conn = get_catalog_db()
-    admin_email = "admin@example.com"
-
-    # Delete messages between user and admin
-    conn.execute(
-        """
-        DELETE FROM messages
-        WHERE (sender_email = ? AND receiver_email = ?)
-           OR (sender_email = ? AND receiver_email = ?)
-        """,
-        (user['email'], admin_email, admin_email, user['email'])
-    )
-    conn.commit()
-    conn.close()
-
-    return jsonify({"success": True})
+        flash("Chat system is disabled for regular users.", "info")
+        return render_template("empty_inbox.html", user=user, short_name=user.get("short_name"))
 
 @app.route('/contact', methods=["GET", "POST"])
 def contact():
@@ -672,138 +625,11 @@ def contact():
         return redirect(url_for("index"))
 
     if request.method == "POST":
-        message_text = request.form.get("message", "").strip()
-        if message_text:
-            conn = get_catalog_db()
-            conn.execute(
-                "INSERT INTO messages (sender_email, receiver_email, message, timestamp) VALUES (?, ?, ?, datetime('now'))",
-                (user['email'], "admin@example.com", message_text)
-            )
-            conn.commit()
-            conn.close()
-            flash("Message sent to admin.", "success")
-        else:
-            flash("Message cannot be empty.", "error")
+        # You can either disable sending completely:
+        flash("Messaging system is disabled.", "info")
+        # Or handle other contact logic (like sending email) if you want here.
 
     return render_template("contact.html", short_name=user["short_name"], user=user)
-
-@app.route('/api/messages/<user_email>', methods=['GET', 'POST', 'DELETE'])
-def messages(user_email):
-    user = get_user()
-    if not user:
-        return {"error": "Unauthorized"}, 401
-
-    conn = get_catalog_db()
-
-    if request.method == 'GET':
-        # Fetch messages between current user and user_email (admin or other)
-        messages = conn.execute(
-            """
-            SELECT * FROM messages 
-            WHERE (sender_email = ? AND receiver_email = ?) 
-               OR (sender_email = ? AND receiver_email = ?)
-            ORDER BY timestamp
-            """,
-            (user['email'], user_email, user_email, user['email'])
-        ).fetchall()
-        conn.close()
-        # Convert rows to dict
-        messages_list = [dict(row) for row in messages]
-        return jsonify(messages_list)
-
-    elif request.method == 'POST':
-        data = request.get_json()
-        message_text = data.get('message')
-        if not message_text:
-            conn.close()
-            return {"error": "No message provided"}, 400
-        
-        conn.execute(
-            "INSERT INTO messages (sender_email, receiver_email, message, timestamp) VALUES (?, ?, ?, datetime('now'))",
-            (user['email'], user_email, message_text)
-        )
-        conn.commit()
-        conn.close()
-        return {"success": True}
-
-    elif request.method == 'DELETE':
-        # Delete all messages between current user and user_email
-        conn.execute(
-            """
-            DELETE FROM messages 
-            WHERE (sender_email = ? AND receiver_email = ?) 
-               OR (sender_email = ? AND receiver_email = ?)
-            """,
-            (user['email'], user_email, user_email, user['email'])
-        )
-        conn.commit()
-        conn.close()
-        return {"success": True}
-
-@app.route('/api/messages/<partner_email>', methods=['GET', 'POST'])
-def api_messages_with_partner(partner_email):
-    user = get_user()
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    conn = get_catalog_db()
-
-    if request.method == 'GET':
-        messages = conn.execute(
-            """SELECT * FROM messages
-            WHERE (sender_email = ? AND receiver_email = ?) OR (sender_email = ? AND receiver_email = ?)
-            ORDER BY timestamp""",
-            (user['email'], partner_email, partner_email, user['email'])
-        ).fetchall()
-        conn.close()
-        return jsonify([dict(m) for m in messages])
-
-    elif request.method == 'POST':
-        data = request.json
-        message_text = data.get('message', '').strip()
-        if not message_text:
-            return jsonify({"error": "Empty message"}), 400
-
-        conn.execute(
-            "INSERT INTO messages (sender_email, receiver_email, message, timestamp) VALUES (?, ?, ?, ?)",
-            (user['email'], partner_email, message_text, datetime.now().isoformat())
-        )
-        conn.commit()
-        conn.close()
-
-        return jsonify({"status": "sent"})
-
-@app.route('/api/messages/clear', methods=['POST'])
-def clear_messages():
-    user = get_user()
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    conn = get_catalog_db()
-    conn.execute(
-        "DELETE FROM messages WHERE sender_email = ? OR receiver_email = ?", 
-        (user['email'], user['email'])
-    )
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "cleared"})
-
-# Admin views chat with a specific user
-@app.route("/chat/<user_email>")
-def chat_with_user(user_email):
-    user = get_user()
-    if not user or user['role'] != 'admin':
-        flash("Unauthorized access.", "error")
-        return redirect(url_for('index'))
-
-    conn = get_catalog_db()
-    messages = conn.execute(
-        "SELECT * FROM messages WHERE (sender_email = ? AND receiver_email = ?) OR (sender_email = ? AND receiver_email = ?) ORDER BY timestamp",
-        (user_email, user['email'], user['email'], user_email)
-    ).fetchall()
-    conn.close()
-
-    return render_template("chat.html", user=user, messages=messages, chat_user=user_email)
 
 @app.route("/settings")
 def settings():
@@ -819,8 +645,13 @@ def delete_account():
         return redirect(url_for("index"))
 
     email = user["email"]
-    if email == "admin@example.com":
-        return redirect(url_for("account_settings", admin_delete_blocked=1))
+    role = user.get("role", "")
+
+    # Block deletion differently for admin and owner
+    if role == "admin":
+        return redirect(url_for("settings", admin_delete_blocked=1))
+    elif role == "owner":
+        return redirect(url_for("settings", owner_delete_blocked=1))
 
     conn = sqlite3.connect("user.db")
     conn.execute("DELETE FROM users WHERE email = ?", (email,))
@@ -838,9 +669,8 @@ def account_settings():
         return redirect(url_for("index"))
 
     if request.method == "POST":
-        first_name = request.form.get("first_name")
-        last_name = request.form.get("last_name")
-        gender_id = request.form.get("gender_id", 1)  # default to Male (1)
+        full_name = request.form.get("full_name")
+        gender_id = request.form.get("gender_id", 1)
 
         conn = sqlite3.connect("user.db")
         cur = conn.cursor()
@@ -856,18 +686,18 @@ def account_settings():
             cur.execute("UPDATE users SET profile_image = ? WHERE email = ?", (filename, user["email"]))
 
         cur.execute(
-            "UPDATE users SET first_name = ?, last_name = ?, gender_id = ? WHERE email = ?", 
-            (first_name, last_name, gender_id, user["email"])
+            "UPDATE users SET full_name = ?, gender_id = ? WHERE email = ?", 
+            (full_name, gender_id, user["email"])
         )
 
         conn.commit()
         conn.close()
 
         flash("Account updated successfully.", "success")
-        # Redirect after POST to avoid form resubmission and flash showing on wrong page
         return redirect(url_for("account_settings"))
 
     return render_template("account.html", user=user)
+
 
 @app.route("/change-password", methods=["POST"])
 def change_password():
@@ -897,33 +727,90 @@ def change_password():
 
     return redirect(url_for("account_settings"))
 
-@app.route("/login", methods=["POST"])  # sirf POST hi kare login attempt
+
+@app.route("/change-info", methods=["POST"])
+def change_info():
+    user = get_user()
+    if not user:
+        return redirect(url_for("index"))
+
+    email = request.form.get("email").strip()
+    contact = request.form.get("contact").strip()
+
+    if not email and not contact:
+        flash("Please provide at least one field to update.", "error")
+        return redirect(url_for("account_settings"))
+
+    conn = sqlite3.connect("user.db")
+    cur = conn.cursor()
+
+    if email:
+        cur.execute("UPDATE users SET email = ? WHERE id = ?", (email, user["id"]))
+    if contact:
+        cur.execute("UPDATE users SET contact = ? WHERE id = ?", (contact, user["id"]))
+
+    conn.commit()
+    conn.close()
+
+    flash("Information updated successfully.", "success")
+    return redirect(url_for("account_settings"))
+
+@app.route("/login", methods=["POST"])
 def login():
     email = request.form.get("email")
     password = request.form.get("password")
     role = request.form.get("role")
 
+    if not email or not password:
+        flash("Email and password are required.", "error")
+        return redirect(url_for("index", login_error=1))
+
     conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
     user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     conn.close()
 
-    if not user or not check_password_hash(user[5], password):
+    if not user or not user["password"]:
         flash("Invalid email or password", "error")
-        return redirect(url_for("index", login_error=1))  # extra query param
-
-    db_role = user[7] if len(user) > 7 else "user"
-    if role == "admin" and db_role != "admin":
-        flash("You are not authorized to log in as Admin.", "error")
         return redirect(url_for("index", login_error=1))
 
-    session["user"] = email
+    if not check_password_hash(user["password"], password):
+        flash("Invalid email or password", "error")
+        return redirect(url_for("index", login_error=1))
+
+    db_role = user["role"] if "role" in user.keys() else "user"
+
+    # Prevent admin/owner from logging in here
+    if db_role in ("admin", "owner"):
+        flash("Please login from admin panel.", "error")
+        return redirect(url_for("index", login_error=1))
+
+    # Only regular users can log in here
+    session["user"] = {
+        "email": user["email"],
+        "role": db_role,
+        "name": user["full_name"]
+    }
+
     return redirect(url_for("home"))
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        if not email:
+            flash("Please enter your email address.", "error")
+            return redirect(url_for('forgot_password'))
+
+        flash("If this email is registered, you will receive reset instructions.", "success")
+        return redirect(url_for('login'))  
+
+    return render_template('forgot_password.html')
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        first_name = request.form.get("first_name")
-        last_name = request.form.get("last_name")
+        full_name = request.form.get("full_name")
         contact = request.form.get("contact")
         email = request.form.get("email")
         password = request.form.get("password")
@@ -938,8 +825,8 @@ def register():
         try:
             conn = sqlite3.connect(DATABASE)
             conn.execute(
-                "INSERT INTO users (first_name, last_name, contact, email, password, role) VALUES (?, ?, ?, ?, ?, ?)",
-                (first_name, last_name, contact, email, hashed_pw, 'user')
+                "INSERT INTO users (full_name, contact, email, password, role) VALUES (?, ?, ?, ?, ?)",
+                (full_name, contact, email, hashed_pw, 'user')
             )
             conn.commit()
             flash("Registration successful. Please login.", "register_success")
@@ -952,10 +839,112 @@ def register():
 
     return redirect(url_for("index"))
 
+@app.route('/create_admin', methods=['GET', 'POST'])
+def create_admin():
+    user = get_user()
+    if not user or user.get('role') not in ['admin', 'owner']:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for('index'))
+
+    conn = get_user_db()
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        contact = request.form.get('contact')
+
+        if not full_name or not email or not contact:
+            flash("All fields are required.", "error")
+            conn.close()
+            return redirect(url_for('create_admin'))
+
+        existing_user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        if existing_user:
+            flash("Email already exists.", "error")
+            conn.close()
+            return redirect(url_for('create_admin'))
+
+        # Use default password '1234'
+        default_password = '1234'
+        password_hash = generate_password_hash(default_password)
+
+        conn.execute(
+            "INSERT INTO users (full_name, email, contact, password, role) VALUES (?, ?, ?, ?, ?)",
+            (full_name, email, contact, password_hash, 'admin')
+        )
+        conn.commit()
+        flash("Admin user created successfully! Default password is '1234'. Please change it after login.", "success")
+
+    # Always fetch admins to display
+    admins = conn.execute("SELECT id, full_name as name, email, contact FROM users WHERE role = 'admin'").fetchall()
+    conn.close()
+
+    return render_template('create_admin.html', user=user, admins=admins)
+
+@app.route('/delete_admin/<int:admin_id>', methods=['POST'])
+def delete_admin(admin_id):
+    user = get_user()
+    if not user or user.get('role') not in ['admin', 'owner']:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for('index'))
+
+    conn = get_user_db()
+    conn.execute("DELETE FROM users WHERE id = ? AND role = 'admin'", (admin_id,))
+    conn.commit()
+    conn.close()
+
+    flash("Admin deleted successfully.", "success")
+    return redirect(url_for('create_admin'))
+
+@app.route("/login_admin", methods=["GET", "POST"])
+def login_admin():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        if not email or not password:
+            flash("Email and password are required.", "error")
+            return redirect(url_for("login_admin"))
+
+        conn = sqlite3.connect(DATABASE)
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+        conn.close()
+
+        if not user or not user[4]:  # Check if user exists and has a password
+            flash("Invalid email or password", "error")
+            return redirect(url_for("login_admin"))
+
+        if not check_password_hash(user[4], password):
+            flash("Invalid email or password", "error")
+            return redirect(url_for("login_admin"))
+
+        db_role = user[7] if len(user) > 7 else "user"
+        if db_role not in ["admin", "owner"]:
+            flash("You are not authorized to log in as Admin/Owner.", "error")
+            return redirect(url_for("login_admin"))
+
+        session["user"] = {
+            "email": email,
+            "role": db_role,
+            "full_name": user[1]  # Assuming full_name is at index 1
+        }
+
+        return redirect(url_for("home"))
+
+    # If GET request, show login_admin.html
+    return render_template("login_admin.html")
+
 @app.route("/logout")
 def logout():
+    user = session.get("user")
+    role = user.get("role") if user else None  # safely get role
+
     session.pop("user", None)
-    return redirect(url_for("index"))
+
+    if role in ("admin", "owner"):
+        return redirect(url_for("login_admin"))
+    else:
+        return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(debug=True)

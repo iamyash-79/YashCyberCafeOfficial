@@ -1,32 +1,23 @@
 import sqlite3
 
-# Connect to your SQLite database
-conn = sqlite3.connect("user.db")  # Change path if needed
-cursor = conn.cursor()
+DB_PATH = "messages.db"  # Ya aapka catalog.db ya jo bhi aap use kar rahe ho
 
-# Step 1: Create the gender table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS gender (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
-);
-""")
+def create_messages_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender_email TEXT NOT NULL,
+        receiver_email TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        is_read INTEGER DEFAULT 0
+    )
+    """)
+    conn.commit()
+    conn.close()
+    print(f"Database and messages table created at {DB_PATH}")
 
-# Step 2: Check if gender_id exists in users table
-cursor.execute("PRAGMA table_info(users);")
-columns = [col[1] for col in cursor.fetchall()]
-
-# Step 3: Add gender_id column if it's not already in the users table
-if "gender_id" not in columns:
-    cursor.execute("ALTER TABLE users ADD COLUMN gender_id INTEGER REFERENCES gender(id);")
-
-# Step 4: Insert sample gender values
-cursor.execute("INSERT OR IGNORE INTO gender (name) VALUES ('Male');")
-cursor.execute("INSERT OR IGNORE INTO gender (name) VALUES ('Female');")
-cursor.execute("INSERT OR IGNORE INTO gender (name) VALUES ('Other');")
-
-# Save and close
-conn.commit()
-conn.close()
-
-print("Gender table created and linked to users table.")
+if __name__ == "__main__":
+    create_messages_db()
