@@ -114,7 +114,7 @@
             <span>🏠</span><span>Home</span>
           </a>
         </li>
-        {% if user.role == 'admin' %}
+        {% if user.role in ['admin', 'owner'] %}
         <li>
           <a href="/orders" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/orders' else '' }}">
             <span>📅</span><span>Orders</span>
@@ -145,6 +145,18 @@
         <li>
           <a href="/contact" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/contact' else '' }}">
             <span>📬</span><span>Contact us</span>
+          </a>
+        </li>
+        {% endif %}
+        {% if user.role == 'owner' %}
+        <li>
+          <a href="/create_admin" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/create_admin' else '' }}">
+            <span>👨‍💼</span><span>Admin</span>
+          </a>
+        </li>
+        <li>
+          <a href="/soon" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/soon' else '' }}">
+            <span>💭</span><span>Soon</span>
           </a>
         </li>
         {% endif %}

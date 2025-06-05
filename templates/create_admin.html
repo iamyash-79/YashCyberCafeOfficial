@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+  <div class="flex" id="mainContent">
+
+    <!-- Include Sidebar -->
+    {% include 'sidebar.html' %}
+
+    <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden" x-data="{ showModal: false }">
+
+      <!-- Top bar -->
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Admin</h1>
+        <button @click="showModal = true"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+          Create Admin
+        </button>
+      </div>
+
+      <!-- Admin List Table -->
+      <div class="overflow-x-auto bg-white rounded shadow">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">S.No.</th>
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Name</th>
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Email</th>
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Contact</th>
+              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for admin in admins %}
+            <tr>
+              <td class="px-4 py-2 text-sm text-gray-700">{{ loop.index }}</td>
+              <td class="px-4 py-2 text-sm text-gray-800">{{ admin.name }}</td>
+              <td class="px-4 py-2 text-sm text-gray-800">{{ admin.email }}</td>
+              <td class="px-4 py-2 text-sm text-gray-800">{{ admin.contact }}</td>
+              <td class="px-4 py-2 text-sm text-gray-800">
+                <form method="POST" action="{{ url_for('delete_admin', admin_id=admin.id) }}" onsubmit="return confirm('Are you sure you want to delete this admin?');">
+                  <button type="submit" class="text-red-600 hover:text-red-800 font-semibold">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Form -->
+      <div x-show="showModal" x-cloak
+           class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div @click.away="showModal = false" class="bg-white w-full max-w-lg p-6 rounded shadow-lg relative">
+
+          <h2 class="text-xl font-semibold mb-4 text-center">Create Admin</h2>
+
+          <form method="POST" action="{{ url_for('create_admin') }}" class="space-y-4">
+  <div>
+    <label class="block font-semibold mb-1" for="full_name">Full Name</label>
+    <input type="text" name="full_name" id="full_name" required
+           class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label class="block font-semibold mb-1" for="email">Email</label>
+    <input type="email" name="email" id="email" required
+           class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+  </div>
+
+  <div>
+    <label class="block font-semibold mb-1" for="contact">Contact</label>
+    <input type="text" name="contact" id="contact" required
+           class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
+  </div>
+
+  <div class="text-center">
+    <button type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">
+      Submit
+    </button>
+    <button type="button" @click="showModal = false"
+            class="ml-3 text-gray-600 hover:text-red-600">
+      Cancel
+    </button>
+  </div>
+</form>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

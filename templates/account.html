@@ -38,14 +38,8 @@
           <!-- Left Side: Form Fields -->
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">First name</label>
-              <input type="text" name="first_name" value="{{ user.first_name }}"
-                     class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                     required />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Last name</label>
-              <input type="text" name="last_name" value="{{ user.last_name }}"
+              <label class="block text-sm font-medium text-gray-700">Full name</label>
+              <input type="text" name="full_name" value="{{ user.full_name }}"
                      class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                      required />
             </div>
@@ -100,24 +94,59 @@
       </form>
 
       <!-- Login Info -->
-      <div class="mt-10 bg-white p-6 rounded-xl shadow space-y-4">
-        <h2 class="text-xl font-semibold text-gray-800">Login Info</h2>
-        <div class="text-sm space-y-2">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Email</label>
-            <p class="mt-1 text-gray-600">{{ user.email }}</p>
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Password</label>
-              <p class="mt-1 text-gray-600">••••••••</p>
-            </div>
-            <button onclick="document.getElementById('passwordModal').classList.remove('hidden')" class="text-blue-600 hover:underline text-sm">
-              Change Password
-            </button>
-          </div>
-        </div>
+<div class="mt-10 bg-white p-6 rounded-xl shadow space-y-4">
+  <h2 class="text-xl font-semibold text-gray-800">Login Info</h2>
+  <div class="text-sm space-y-2">
+    <div class="flex items-center justify-between">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Email</label>
+        <p class="mt-1 text-gray-600">{{ user.email }}</p>
       </div>
+      <button onclick="document.getElementById('infoModal').classList.remove('hidden')" class="text-blue-600 hover:underline text-sm">
+        Change Email / Mobile
+      </button>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Mobile</label>
+      <p class="mt-1 text-gray-600">{{ user.contact }}</p>
+    </div>
+    <div class="flex items-center justify-between">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Password</label>
+        <p class="mt-1 text-gray-600">••••••••</p>
+      </div>
+      <button onclick="document.getElementById('passwordModal').classList.remove('hidden')" class="text-blue-600 hover:underline text-sm">
+        Change Password
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Info Modal -->
+<div id="infoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white w-full max-w-md p-6 rounded-xl shadow space-y-4 relative">
+    <button onclick="document.getElementById('infoModal').classList.add('hidden')" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">&times;</button>
+    <h2 class="text-xl font-semibold text-gray-800">Change Email or Mobile</h2>
+    <form method="POST" action="/change-info" class="space-y-4" onsubmit="
+      if (!this.email.value && !this.contact.value) {
+        event.preventDefault();
+        return;
+      }
+    ">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">New Email (optional)</label>
+        <input type="email" name="email" class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">New Mobile Number (optional)</label>
+        <input type="text" name="contact" class="mt-1 w-full border border-gray-300 rounded-md shadow-sm px-3 py-2" />
+      </div>
+      <div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
 
       <!-- Password Modal -->
       <div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">

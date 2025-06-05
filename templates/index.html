@@ -24,7 +24,7 @@
   }
     header h1 { font-size: 1.8rem; }
     nav a { margin-left: 1.5rem; text-decoration: none; color: #fff; font-weight: 500; cursor: pointer; }
-    nav a:hover { text-decoration: underline; }
+    nav a:hover { text-decoration: none; }
     /* Default hidden hamburger */
 #menuToggle {
   display: none;
@@ -364,7 +364,7 @@ footer {
 
   <!-- Nav Links -->
   <nav id="navLinks">
-    <a href="#">Home</a>
+    <a href="{{ url_for('index') }}">Home</a>
     <a onclick="openModal('loginModal')">Login</a>
     <a onclick="openModal('registerModal')">Register</a>
   </nav>
@@ -462,102 +462,85 @@ footer {
 
 
   <!-- Login Modal -->
-  <div id="loginModal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('loginModal')">&times;</span>
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('loginModal')">&times;</span>
+    
+    <h2 style="color:#1e3799; margin-bottom:1rem;">Login to Your Account</h2>
+
+    <form action="{{ url_for('login') }}" method="POST" autocomplete="off">
+      <label for="login_email">Email</label>
+      <input type="email" id="login_email" name="email" required placeholder="you@example.com" />
+
+      <label for="login_password">Password</label>
+      <input type="password" id="login_password" name="password" required placeholder="Enter your password" />
       
-      <h2 style="color:#1e3799; margin-bottom:1rem;">Login to Your Account</h2>
+      <!-- Forgot Password link -->
+      <p style="margin-top: 0.3rem; margin-bottom: 1rem; font-size: 0.9rem; text-align: right;">
+        <a href="{{ url_for('forgot_password') }}" style="color:#1e3799; text-decoration: none;">Forgot password?</a>
+      </p>
 
-      <!-- Flash messages inside popup -->
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="mb-4">
-            {% for category, message in messages %}
-              <div class="px-4 py-2 rounded 
-                {% if category == 'error' %} bg-red-100 text-red-700
-                {% elif category == 'success' %} bg-green-100 text-green-700
-                {% else %} bg-gray-100 text-gray-700
-                {% endif %}">
-                {{ message }}
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
+      <input type="submit" value="Login" />
+    </form>
 
-      <form action="{{ url_for('login') }}" method="POST" autocomplete="off">
-        <label for="login_email">Email</label>
-        <input type="email" id="login_email" name="email" required placeholder="you@example.com" />
-
-        <label for="login_password">Password</label>
-        <input type="password" id="login_password" name="password" required placeholder="Enter your password" />
-
-        <input type="submit" value="Login" />
-      </form>
-    </div>
+    <!-- Not registered link -->
+    <p style="margin-top: 1rem; text-align: center;">
+      Not registered? 
+      <button type="button" onclick="openRegisterModal()" style="background:none; border:none; color:#1e3799; cursor:pointer; text-decoration: none; padding:0;">
+        Click here
+      </button>
+    </p>
   </div>
+</div>
 
-  <!-- Register Modal -->
-  <div id="registerModal" class="modal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('registerModal')">&times;</span>
+<!-- Register Modal -->
+<div id="registerModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('registerModal')">&times;</span>
 
-      <h2 style="color:#1e3799; margin-bottom:1rem;">Create a New Account</h2>
+    <h2 style="color:#1e3799; margin-bottom:1rem;">Create a New Account</h2>
 
-      <!-- Flash messages for register -->
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            {% if category == 'register_error' %}
-              <div class="flash-message flash-error">{{ message }}</div>
-            {% elif category == 'register_success' %}
-              <div class="flash-message flash-success">{{ message }}</div>
-            {% endif %}
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
+    <!-- Flash messages for register -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'register_error' %}
+            <div class="flash-message flash-error">{{ message }}</div>
+          {% elif category == 'register_success' %}
+            <div class="flash-message flash-success">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-      <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
-        <label for="first_name">First Name</label>
-        <input type="text" id="first_name" name="first_name" required placeholder="First name" />
+    <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
+      <label for="full_name">Full Name</label>
+      <input type="text" id="full_name" name="full_name" required placeholder="Full name" />
 
-        <label for="last_name">Last Name</label>
-        <input type="text" id="last_name" name="last_name" required placeholder="Last name" />
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required placeholder="you@example.com" />
 
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required placeholder="you@example.com" />
+      <label for="contact">Mobile Number</label>
+      <input type="tel" id="contact" name="contact" required placeholder="123-456-7890" />
 
-        <label for="contact">Mobile Number</label>
-        <input type="tel" id="contact" name="contact" required placeholder="123-456-7890" />
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required placeholder="Password" />
 
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required placeholder="Password" />
+      <label for="confirm_password">Confirm Password</label>
+      <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm Password" />
 
-        <label for="confirm_password">Confirm Password</label>
-        <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm Password" />
+      <input type="submit" value="Register" />
+    </form>
 
-        <input type="submit" value="Register" />
-      </form>
-    </div>
+    <!-- Login link -->
+    <p style="margin-top: 1rem; text-align: center;">
+      Already have an account? 
+      <button type="button" onclick="openLoginModal()" style="background:none; border:none; color:#1e3799; cursor:pointer; text-decoration: none; padding:0;">
+        Login
+      </button>
+    </p>
   </div>
-
- <script>
-  function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
-  }
-
-  function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
-  }
-
-  // Close modal when clicking outside
-  window.onclick = function(event) {
-    const loginModal = document.getElementById("loginModal");
-    const registerModal = document.getElementById("registerModal");
-    if (event.target === loginModal) closeModal('loginModal');
-    if (event.target === registerModal) closeModal('registerModal');
-  };
-</script>
+</div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for category, _ in messages %}
@@ -578,26 +561,38 @@ footer {
 {% endwith %}
 
 <script>
+  // Open specific modal (flex display)
   function openModal(id) {
     document.getElementById(id).style.display = 'flex';
   }
 
+  // Close specific modal
   function closeModal(id) {
     document.getElementById(id).style.display = 'none';
   }
 
-  // Close modal on background click
-  window.onclick = function (event) {
+  // Open login modal and hide register modal
+  function openLoginModal() {
+    closeModal('registerModal');
+    openModal('loginModal');
+  }
+
+  // Open register modal and hide login modal
+  function openRegisterModal() {
+    closeModal('loginModal');
+    openModal('registerModal');
+  }
+
+  // Close modal when clicking outside modal content
+  window.onclick = function(event) {
     document.querySelectorAll('.modal').forEach(modal => {
       if (event.target === modal) {
-        modal.style.display = "none";
+        modal.style.display = 'none';
       }
     });
-  }
-</script>
+  };
 
-<!-- 👇 Mobile nav toggle script -->
-<script>
+  // Mobile nav toggle script
   const menuToggle = document.getElementById('menuToggle');
   const navLinks = document.getElementById('navLinks');
 
@@ -608,14 +603,14 @@ footer {
       menuToggle.setAttribute('aria-expanded', !expanded);
     });
   }
-</script>
 
-<script>
+  // Parallax scroll effect
   window.addEventListener("scroll", function () {
     const scrollTop = window.scrollY;
     const parallax = document.getElementById("parallax-bg");
-    // Scroll image at 50% of text speed
-    parallax.style.transform = "translateY(" + scrollTop * 0.5 + "px)";
+    if (parallax) {
+      parallax.style.transform = "translateY(" + scrollTop * 0.5 + "px)";
+    }
   });
 </script>
 
