@@ -12,7 +12,7 @@ role = "owner"
 password_hash = generate_password_hash(plain_password)
 
 # Connect to DB
-conn = sqlite3.connect("user.db")
+conn = sqlite3.connect("users.db")
 conn.execute("""
     INSERT INTO users (full_name, email, password, role, contact)
     VALUES (?, ?, ?, ?, ?)

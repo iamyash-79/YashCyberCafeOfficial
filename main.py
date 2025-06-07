@@ -2,25 +2,39 @@ from flask import Flask, render_template, request, g, redirect, session, url_for
 import sqlite3, os, json
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
+@app.template_filter('datetimeformat')
+def format_datetime(value):
+    try:
+        utc = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+        ist = utc + timedelta(hours=5, minutes=30)
+        return ist.strftime("%d/%m/%Y %I:%M %p")
+    except Exception:
+        return value
+    
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, 'user.db')
+DATABASE = os.path.join(BASE_DIR, 'users.db')
 
 def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DATABASE, timeout=10)
         g.db.row_factory = sqlite3.Row
     return g.db
+
+def get_services_db():
+    conn = sqlite3.connect("services.db", timeout=10)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @app.teardown_appcontext
 def close_db(error):
@@ -49,8 +63,8 @@ def get_user_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def get_catalog_db():
-    conn = sqlite3.connect('catalog.db', timeout=10)  # Same here
+def get_product_db():
+    conn = sqlite3.connect('product.db', timeout=10)  # Same here
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -104,26 +118,26 @@ def handle_login(expected_role):
     return redirect(request.path)
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def login_user():
+    return render_template('login_user.html')
 
 @app.route("/home")
 def home():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
 
-    # Fetch catalog items
-    cursor = conn.execute("SELECT id, name, description, price, discount_price, images FROM catalog")
-    catalog_items = []
+    # Fetch product items
+    cursor = conn.execute("SELECT id, name, description, price, discount_price, images FROM product")
+    product_items = []
     for row in cursor.fetchall():
         try:
             images = json.loads(row["images"]) if row["images"] else []
         except Exception:
             images = []
-        catalog_items.append({
+        product_items.append({
             'id': row['id'],
             'name': row['name'],
             'description': row['description'],
@@ -146,7 +160,7 @@ def home():
         "home.html",
         user=user,
         short_name=user["short_name"],
-        catalog_items=catalog_items,
+        product_items=product_items,
         last_order=last_order
     )
 
@@ -154,9 +168,9 @@ def home():
 def my_orders():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     cursor = conn.execute(
         """SELECT id, item_name, quantity, status, address1, address2, city, pincode, order_date, is_paid, amount 
            FROM orders WHERE user_email = ?""", 
@@ -172,7 +186,7 @@ def submit_order(item_id):
     user = get_user()
     if not user:
         flash("Login required to submit an order", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
     # Get form data
     name = request.form.get('name')
@@ -190,8 +204,8 @@ def submit_order(item_id):
         flash("Quantity and amount are required.", "error")
         return redirect(request.referrer or url_for('home'))
 
-    conn = get_catalog_db()
-    item = conn.execute("SELECT id, name FROM catalog WHERE id = ?", (item_id,)).fetchone()
+    conn = get_product_db()
+    item = conn.execute("SELECT id, name FROM product WHERE id = ?", (item_id,)).fetchone()
     if not item:
         flash("Item not found.", "error")
         conn.close()
@@ -230,12 +244,12 @@ def orders():
     user = get_user()
     if not user:
         flash("Please log in to view orders.", "error")
-        return redirect(url_for("index"))  # or your login page
+        return redirect(url_for("login_user"))  # or your login page
 
     status_filter = request.args.get("status")
     date_filter = request.args.get("date")
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     query = "SELECT * FROM orders WHERE 1=1"
     params = []
 
@@ -268,7 +282,7 @@ def accept_order(order_id):
         flash("Unauthorized", "error")
         return redirect(url_for('home'))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     conn.execute("UPDATE orders SET status = 'accepted' WHERE id = ?", (order_id,))
     conn.commit()
     conn.close()
@@ -281,9 +295,9 @@ def cancel_order(order_id):
     user = get_user()
     if not user:
         flash("Unauthorized", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     order = conn.execute("SELECT user_email FROM orders WHERE id = ?", (order_id,)).fetchone()
     if not order:
         flash("Order not found.", "error")
@@ -311,7 +325,7 @@ def deliver_order(order_id):
         flash("Unauthorized access.", "error")
         return redirect(url_for("home"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     order = conn.execute("SELECT status FROM orders WHERE id = ?", (order_id,)).fetchone()
 
     if not order:
@@ -334,9 +348,9 @@ def mark_paid(order_id):
     user = get_user()
     if not user:
         flash("Unauthorized access.", "error")
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     order = conn.execute("SELECT id, user_email FROM orders WHERE id = ?", (order_id,)).fetchone()
 
     if not order:
@@ -369,7 +383,7 @@ def delete_order(order_id):
         flash("Unauthorized", "error")
         return redirect(url_for('home'))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     conn.execute("DELETE FROM orders WHERE id = ?", (order_id,))
     conn.commit()
     conn.close()
@@ -381,15 +395,37 @@ def delete_order(order_id):
 def sales():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
-    conn = get_catalog_db()
+    # ---- Online Orders (your original logic) ----
+    conn = get_product_db()
     total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
     delivered_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'delivered'").fetchone()[0]
     pending_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE status = 'pending'").fetchone()[0]
     total_revenue = conn.execute("SELECT SUM(amount) FROM orders WHERE status = 'delivered'").fetchone()[0] or 0
     orders = conn.execute("SELECT * FROM orders ORDER BY order_date DESC").fetchall()
     conn.close()
+
+    # ---- Offline Bills ----
+    import sqlite3
+    conn2 = sqlite3.connect("bill.db")
+    conn2.row_factory = sqlite3.Row
+    cur2 = conn2.cursor()
+
+    offline_bills = cur2.execute("SELECT * FROM bills ORDER BY created_at DESC").fetchall()
+    offline_revenue = sum(b["total"] for b in offline_bills if b["total"])
+
+    bills = [{
+        "name": b["name"],
+        "contact": b["contact"],
+        "amount": b["total"],
+        "date": b["created_at"]
+    } for b in offline_bills]
+
+    conn2.close()
+
+    # ---- Grand Total ----
+    grand_revenue = int(total_revenue) + round(offline_revenue or 0, 2)
 
     return render_template("sales.html",
         user=user,
@@ -398,14 +434,17 @@ def sales():
         delivered_orders=delivered_orders,
         pending_orders=pending_orders,
         total_revenue=int(total_revenue),
-        orders=orders
+        offline_revenue=round(offline_revenue, 2),
+        grand_revenue=round(grand_revenue, 2),
+        orders=orders,
+        bills=bills
     )
 
-@app.route('/catalog', methods=['GET', 'POST'])
-def catalog():
+@app.route('/product', methods=['GET', 'POST'])
+def product():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
     short_name = user.get("short_name", "Guest")
 
@@ -418,7 +457,7 @@ def catalog():
 
         if not (1 <= len(images) <= 5):
             flash("Upload between 1 to 5 images.", "error")
-            return redirect(url_for('catalog'))
+            return redirect(url_for('product'))
 
         upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/uploads')
         os.makedirs(upload_folder, exist_ok=True)
@@ -431,28 +470,28 @@ def catalog():
                 img.save(img_path)
                 saved_filenames.append(filename)
 
-        conn = get_catalog_db()
+        conn = get_product_db()
         conn.execute(
-            "INSERT INTO catalog (name, description, price, discount_price, images) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO product (name, description, price, discount_price, images) VALUES (?, ?, ?, ?, ?)",
             (name, description, price, discount_price, json.dumps(saved_filenames))
         )
         conn.commit()
         conn.close()
 
-        flash("Catalog item added successfully!", "success")
-        return redirect(url_for('catalog'))
+        flash("product item added successfully!", "success")
+        return redirect(url_for('product'))
 
-    # GET: Fetch and prepare catalog items for display
-    conn = get_catalog_db()
-    rows = conn.execute("SELECT * FROM catalog ORDER BY id DESC").fetchall()
-    catalog_items = []
+    # GET: Fetch and prepare product items for display
+    conn = get_product_db()
+    rows = conn.execute("SELECT * FROM product ORDER BY id DESC").fetchall()
+    product_items = []
     for row in rows:
         try:
             images = json.loads(row["images"]) if row["images"] else []
         except Exception:
             images = []
 
-        catalog_items.append({
+        product_items.append({
             "id": row["id"],
             "name": row["name"],
             "description": row["description"],
@@ -463,23 +502,23 @@ def catalog():
     conn.close()
 
     return render_template(
-        'catalog.html',
+        'product.html',
         user=user,
         short_name=short_name,
-        catalog_items=catalog_items
+        product_items=product_items
     )
 
-@app.route('/edit_catalog/<int:item_id>', methods=['POST'])
-def edit_catalog(item_id):
+@app.route('/edit_product/<int:item_id>', methods=['POST'])
+def edit_product(item_id):
     user = get_user()
     if not user or user.get("role") not in ["admin", "owner"]:
         flash("Unauthorized", "error")
         return redirect(url_for("home"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
 
     # Get existing images from DB for this item
-    cur = conn.execute("SELECT images FROM catalog WHERE id = ?", (item_id,))
+    cur = conn.execute("SELECT images FROM product WHERE id = ?", (item_id,))
     row = cur.fetchone()
     old_images = []
 
@@ -524,13 +563,13 @@ def edit_catalog(item_id):
         if len(new_images) > 5:
             flash("You can upload maximum 5 images", "error")
             conn.close()
-            return redirect(url_for('catalog'))
+            return redirect(url_for('product'))
     else:
         # No new images uploaded, keep old ones
         new_images = old_images
 
     conn.execute("""
-        UPDATE catalog
+        UPDATE product
         SET name = ?, description = ?, price = ?, discount_price = ?, images = ?
         WHERE id = ?
     """, (name, description, price, discount_price, json.dumps(new_images), item_id))
@@ -538,20 +577,20 @@ def edit_catalog(item_id):
     conn.commit()
     conn.close()
 
-    flash("Catalog item updated successfully.", "success")
-    return redirect(url_for('catalog'))
+    flash("product item updated successfully.", "success")
+    return redirect(url_for('product'))
 
-@app.route('/delete_catalog/<int:item_id>', methods=['POST'])
-def delete_catalog(item_id):
+@app.route('/delete_product/<int:item_id>', methods=['POST'])
+def delete_product(item_id):
     user = get_user()
     if not user or user.get("role") not in ["admin", "owner"]:
         flash("Unauthorized action.", "error")
         return redirect(url_for("home"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
     cur = conn.cursor()
 
-    images_row = cur.execute("SELECT images FROM catalog WHERE id = ?", (item_id,)).fetchone()
+    images_row = cur.execute("SELECT images FROM product WHERE id = ?", (item_id,)).fetchone()
     if images_row and images_row[0]:
         # images stored as JSON string, safer to load as JSON if possible
         try:
@@ -567,20 +606,83 @@ def delete_catalog(item_id):
                 if os.path.exists(img_path):
                     os.remove(img_path)
 
-    cur.execute("DELETE FROM catalog WHERE id = ?", (item_id,))
+    cur.execute("DELETE FROM product WHERE id = ?", (item_id,))
     conn.commit()
     conn.close()
 
-    flash("Catalog item deleted successfully.", "success")
-    return redirect(url_for("home"))
+    flash("product item deleted successfully.", "success")
+    return redirect(url_for("product"))
+
+@app.route("/services", methods=["GET", "POST"])
+def services():
+    user = get_user()
+    if not user:
+        return redirect(url_for("login_user"))
+
+    conn = get_services_db()
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        price = request.form.get("price")
+        discount_price = request.form.get("discount_price")
+        description = request.form.get("description")
+
+        conn.execute(
+            "INSERT INTO services (name, price, discount_price, description) VALUES (?, ?, ?, ?)",
+            (name, price, discount_price, description)
+        )
+        conn.commit()
+
+    services = conn.execute("SELECT * FROM services ORDER BY id DESC").fetchall()
+    conn.close()
+
+    return render_template("services.html", user=user, short_name=user["short_name"], services=services)
+
+@app.route('/edit_service/<int:service_id>', methods=['POST'])
+def edit_service(service_id):
+    user = get_user()
+    if not user or user.get("role") not in ["admin", "owner"]:
+        flash("Unauthorized", "error")
+        return redirect(url_for("services"))
+
+    name = request.form.get("name")
+    price = request.form.get("price")
+    discount_price = request.form.get("discount_price")
+    description = request.form.get("description")
+
+    conn = get_services_db()
+    conn.execute(
+        "UPDATE services SET name = ?, price = ?, discount_price = ?, description = ? WHERE id = ?",
+        (name, price, discount_price, description, service_id)
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Service updated successfully.", "success")
+    return redirect(url_for("services"))
+
+@app.route('/delete_service/<int:service_id>', methods=['POST'])
+def delete_service(service_id):
+    user = get_user()
+    if not user or user.get("role") not in ["admin", "owner"]:
+        flash("Unauthorized", "error")
+        return redirect(url_for("services"))
+
+    conn = get_services_db()
+    conn.execute("DELETE FROM services WHERE id = ?", (service_id,))
+    conn.commit()
+    conn.close()
+
+    flash("Service deleted successfully.", "success")
+    return redirect(url_for("services"))
 
 @app.route("/inbox")
 def inbox():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
-    conn = get_catalog_db()
+    conn = get_product_db()
 
     if user['role'] in ('admin', 'owner'):
         # Get distinct user emails they've messaged or received messages from
@@ -618,11 +720,194 @@ def inbox():
         flash("Chat system is disabled for regular users.", "info")
         return render_template("empty_inbox.html", user=user, short_name=user.get("short_name"))
 
+from flask import render_template
+
+@app.route("/bill", methods=["GET", "POST"])
+def bill():
+    user = get_user()
+    if not user:
+        return redirect(url_for("login_user"))
+
+    # Load product dropdown
+    conn1 = sqlite3.connect("product.db")
+    conn1.row_factory = sqlite3.Row
+    products = conn1.execute("SELECT name, price, discount_price FROM product").fetchall()
+    conn1.close()
+
+    # Load service dropdown
+    conn2 = sqlite3.connect("services.db")
+    conn2.row_factory = sqlite3.Row
+    services = conn2.execute("SELECT name, price, discount_price FROM services").fetchall()
+    conn2.close()
+
+    if request.method == "POST":
+        data = request.form
+        cust_name = data.get("name")
+        contact = data.get("contact")
+        address1 = data.get("address1")
+        address2 = data.get("address2")
+        city = data.get("city")
+        pincode = data.get("pincode")
+
+        conn = sqlite3.connect("bill.db")
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        cur.execute("""
+            INSERT INTO bills (name, contact, address1, address2, city, pincode, total, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (cust_name, contact, address1, address2, city, pincode, 0, created_at))
+        bill_id = cur.lastrowid
+
+        items = []
+        for key in data:
+            if key.startswith("product_name_"):
+                idx = key.split("_")[-1]
+                item_name = data.get(key)
+                qty = int(data.get(f"product_qty_{idx}") or 1)
+                if item_name:
+                    items.append(("product", item_name, qty))
+            if key.startswith("service_name_"):
+                idx = key.split("_")[-1]
+                item_name = data.get(key)
+                qty = int(data.get(f"service_qty_{idx}") or 1)
+                if item_name:
+                    items.append(("service", item_name, qty))
+
+        total = 0
+        for item_type, item_name, qty in items:
+            db_file = "product.db" if item_type == "product" else "services.db"
+            table = "product" if item_type == "product" else "services"
+
+            lookup_conn = sqlite3.connect(db_file)
+            lookup_conn.row_factory = sqlite3.Row
+            row = lookup_conn.execute(f"SELECT price, discount_price FROM {table} WHERE name = ?", (item_name,)).fetchone()
+            lookup_conn.close()
+
+            if row:
+                price = float(row["discount_price"] or row["price"] or 0)
+                total += price * qty
+                cur.execute("""
+                    INSERT INTO bill_items (bill_id, item_type, item_name, quantity, price)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (bill_id, item_type, item_name, qty, price))
+
+        cur.execute("UPDATE bills SET total = ? WHERE id = ?", (round(total, 2), bill_id))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("bill"))
+
+    # Show all bills
+    conn3 = sqlite3.connect("bill.db")
+    conn3.row_factory = sqlite3.Row
+    cur3 = conn3.cursor()
+
+    bills_raw = cur3.execute("SELECT * FROM bills ORDER BY created_at DESC").fetchall()
+    bills = []
+
+    for b in bills_raw:
+        items = cur3.execute("SELECT * FROM bill_items WHERE bill_id = ?", (b["id"],)).fetchall()
+        item_summary = ", ".join([f"{i['item_name']} x{i['quantity']}" for i in items])
+        bills.append({
+            "id": b["id"],
+            "name": b["name"],
+            "contact": b["contact"],
+            "address": f"{b['address1']} {b['address2']}, {b['city']} - {b['pincode']}",
+            "total": b["total"],
+            "date": b["created_at"],
+            "items": item_summary
+        })
+
+    conn3.close()
+
+    return render_template("bill.html",
+        user=user,
+        short_name=user.get("short_name", "Yash Cyber Cafe"),
+        products=products,
+        services=services,
+        bills=bills
+    )
+
+@app.route("/bill/delete/<int:bill_id>", methods=["POST"])
+def delete_bill(bill_id):
+    conn = sqlite3.connect("bill.db")
+    cur = conn.cursor()
+    cur.execute("DELETE FROM bill_items WHERE bill_id = ?", (bill_id,))
+    cur.execute("DELETE FROM bills WHERE id = ?", (bill_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("bill"))
+
+@app.route("/bill/print/<int:bill_id>")
+def print_bill(bill_id):
+    user = get_user()
+    if not user:
+        return redirect(url_for("login_user"))
+
+    import sqlite3
+
+    conn = sqlite3.connect("bill.db")
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    # Get main bill
+    cur.execute("SELECT * FROM bills WHERE id = ?", (bill_id,))
+    bill = cur.fetchone()
+
+    # Get bill items
+    items_raw = cur.execute("SELECT * FROM bill_items WHERE bill_id = ?", (bill_id,)).fetchall()
+    conn.close()
+
+    final_items = []
+    for item in items_raw:
+        item_name = item["item_name"]
+        item_type = item["item_type"]
+        quantity = int(item["quantity"])
+
+        # Connect to the appropriate DB
+        if item_type == "product":
+            db = sqlite3.connect("product.db")
+            table = "product"
+        else:
+            db = sqlite3.connect("services.db")
+            table = "services"
+
+        db.row_factory = sqlite3.Row
+        cur = db.cursor()
+        cur.execute(f"SELECT price, discount_price FROM {table} WHERE name = ?", (item_name,))
+        row = cur.fetchone()
+        db.close()
+
+        # Convert prices safely
+        try:
+            price = float(row["price"]) if row and row["price"] else 0.0
+        except:
+            price = 0.0
+
+        try:
+            discount_price = float(row["discount_price"]) if row and row["discount_price"] else price
+        except:
+            discount_price = price
+
+        final_items.append({
+            "item_type": item_type,
+            "item_name": item_name,
+            "quantity": quantity,
+            "price": price,
+            "discount_price": discount_price,
+            "total": round(discount_price * quantity, 2)
+        })
+
+    return render_template("print_receipt.html", bill=bill, items=final_items, user=user)
+
 @app.route('/contact', methods=["GET", "POST"])
 def contact():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
     if request.method == "POST":
         # You can either disable sending completely:
@@ -635,14 +920,14 @@ def contact():
 def settings():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
     return render_template("settings.html", user=user, short_name=user.get("short_name"))
 
 @app.route("/delete-account", methods=["POST"])
 def delete_account():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
     email = user["email"]
     role = user.get("role", "")
@@ -653,7 +938,7 @@ def delete_account():
     elif role == "owner":
         return redirect(url_for("settings", owner_delete_blocked=1))
 
-    conn = sqlite3.connect("user.db")
+    conn = sqlite3.connect("users.db")
     conn.execute("DELETE FROM users WHERE email = ?", (email,))
     conn.commit()
     conn.close()
@@ -666,13 +951,13 @@ def delete_account():
 def account_settings():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
     if request.method == "POST":
         full_name = request.form.get("full_name")
         gender_id = request.form.get("gender_id", 1)
 
-        conn = sqlite3.connect("user.db")
+        conn = sqlite3.connect("users.db")
         cur = conn.cursor()
 
         if 'remove_image' in request.form:
@@ -703,7 +988,7 @@ def account_settings():
 def change_password():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
     old_pw = request.form.get("old_password")
     new_pw = request.form.get("new_password")
@@ -713,7 +998,7 @@ def change_password():
         flash("New password and confirmation do not match.", "error")
         return redirect(url_for("account_settings"))
 
-    conn = sqlite3.connect("user.db")
+    conn = sqlite3.connect("users.db")
     cur = conn.cursor()
     row = cur.execute("SELECT password FROM users WHERE email = ?", (user["email"],)).fetchone()
 
@@ -732,7 +1017,7 @@ def change_password():
 def change_info():
     user = get_user()
     if not user:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
     email = request.form.get("email").strip()
     contact = request.form.get("contact").strip()
@@ -741,7 +1026,7 @@ def change_info():
         flash("Please provide at least one field to update.", "error")
         return redirect(url_for("account_settings"))
 
-    conn = sqlite3.connect("user.db")
+    conn = sqlite3.connect("users.db")
     cur = conn.cursor()
 
     if email:
@@ -763,7 +1048,7 @@ def login():
 
     if not email or not password:
         flash("Email and password are required.", "error")
-        return redirect(url_for("index", login_error=1))
+        return redirect(url_for("login_user", login_error=1))
 
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -772,18 +1057,18 @@ def login():
 
     if not user or not user["password"]:
         flash("Invalid email or password", "error")
-        return redirect(url_for("index", login_error=1))
+        return redirect(url_for("login_user", login_error=1))
 
     if not check_password_hash(user["password"], password):
         flash("Invalid email or password", "error")
-        return redirect(url_for("index", login_error=1))
+        return redirect(url_for("login_user", login_error=1))
 
     db_role = user["role"] if "role" in user.keys() else "user"
 
     # Prevent admin/owner from logging in here
     if db_role in ("admin", "owner"):
         flash("Please login from admin panel.", "error")
-        return redirect(url_for("index", login_error=1))
+        return redirect(url_for("login_user", login_error=1))
 
     # Only regular users can log in here
     session["user"] = {
@@ -818,7 +1103,7 @@ def register():
 
         if password != confirm_password:
             flash("Passwords do not match", "register_error")
-            return redirect(url_for("index"))
+            return redirect(url_for("login_user"))
 
         hashed_pw = generate_password_hash(password)
 
@@ -835,16 +1120,16 @@ def register():
         finally:
             conn.close()
 
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
-    return redirect(url_for("index"))
+    return redirect(url_for("login_user"))
 
 @app.route('/create_admin', methods=['GET', 'POST'])
 def create_admin():
     user = get_user()
     if not user or user.get('role') not in ['admin', 'owner']:
         flash("Unauthorized access.", "error")
-        return redirect(url_for('index'))
+        return redirect(url_for('login_user'))
 
     conn = get_user_db()
 
@@ -886,7 +1171,7 @@ def delete_admin(admin_id):
     user = get_user()
     if not user or user.get('role') not in ['admin', 'owner']:
         flash("Unauthorized access.", "error")
-        return redirect(url_for('index'))
+        return redirect(url_for('login_user'))
 
     conn = get_user_db()
     conn.execute("DELETE FROM users WHERE id = ? AND role = 'admin'", (admin_id,))
@@ -926,25 +1211,24 @@ def login_admin():
         session["user"] = {
             "email": email,
             "role": db_role,
-            "full_name": user[1]  # Assuming full_name is at index 1
+            "full_name": user[1]  
         }
 
         return redirect(url_for("home"))
 
-    # If GET request, show login_admin.html
     return render_template("login_admin.html")
 
 @app.route("/logout")
 def logout():
     user = session.get("user")
-    role = user.get("role") if user else None  # safely get role
+    role = user.get("role") if user else None  
 
     session.pop("user", None)
 
     if role in ("admin", "owner"):
         return redirect(url_for("login_admin"))
     else:
-        return redirect(url_for("index"))
+        return redirect(url_for("login_user"))
 
 if __name__ == "__main__":
     app.run(debug=True)
