@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yash Cyber Cafe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-yHfR8E9qFw2F4LFq+2V4Rn8Rks7h+nU4U9ppF2SyIpkl1bMK6TLrd1qZ1FgHzH6vmSh6IzZdxKUm6pCqeT1x1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: #f0f2f5; color: #333; }
+    header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: #0a3d62;
+  padding: 0.5rem 1.5rem; /* reduced padding */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  }
+    header h1 { font-size: 1.8rem; }
+    nav a { margin-left: 1.5rem; text-decoration: none; color: #fff; font-weight: 500; cursor: pointer; }
+    nav a:hover { text-decoration: none; }
+    /* Default hidden hamburger */
+#menuToggle {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #menuToggle {
+  display: block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1600;
+}
+
+#menuToggle .bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  margin: 5px auto;
+  background-color: white; /* or your primary color */
+  transition: all 0.3s ease;
+}
+
+  nav#navLinks {
+    display: none;
+    flex-direction: column;
+    background-color: #0a3d62;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 1rem 0;
+    border-radius: 0 0 12px 12px;
+  }
+
+  nav#navLinks.active {
+    display: flex;
+  }
+
+  nav#navLinks a {
+    margin: 0.5rem 0;
+    text-align: center;
+    font-size: 1.1rem;
+    color: white;
+  }
+}
+.hero {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.parallax-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 150%;
+  background: linear-gradient(to right, rgba(30, 55, 153, 0.7), rgba(74, 105, 189, 0.7)),
+              url('/static/images/background.png') no-repeat center center;
+  background-size: cover;
+  z-index: 1;
+  transform: translateY(0);
+  will-change: transform;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  padding: 0 2rem;
+}
+
+.hero h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.section {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.section h3 {
+  margin-bottom: 1rem;
+  color: #1e3799;
+}
+
+footer {
+  background-color: #0a3d62;
+  color: white;
+  padding: 2rem;
+  text-align: center;
+}
+
+.social-icons a {
+  color: white;
+  margin: 0 0.5rem;
+  font-size: 1.4rem;
+  text-decoration: none;
+}
+
+.terms {
+  margin-top: 1rem;
+}
+
+    /* Modal styles */
+    .modal {
+  display: none;
+  position: fixed;
+  z-index: 2000; /* Increased to appear above header */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  justify-content: center;
+  align-items: center;
+  }
+    .modal-content {
+      background: rgba(255, 255, 255, 0.30);
+      backdrop-filter: blur(8px);
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      overflow-y: auto;
+      max-height: 90vh;
+      /* add these lines to hide scrollbar */
+      scrollbar-width: none;  /* Firefox */
+      -ms-overflow-style: none;  /* IE 10+ */
+    }
+
+    /* for Chrome, Safari, Opera */
+    .modal-content::-webkit-scrollbar {
+      display: none;
+    }
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 25px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #444;
+    }
+
+    /* Forms */
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: #1e3799;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="file"] {
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    input[type="submit"], button {
+      background-color: #1e3799;
+      color: white;
+      padding: 0.75rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    input[type="submit"]:hover, button:hover {
+      background-color: #4a69bd;
+    }
+    .flash-message {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    .flash-error {
+      background-color: #e74c3c;
+      color: white;
+    }
+    .flash-success {
+      background-color: #27ae60;
+      color: white;
+    }
+
+    .real-social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .real-social-icons a img {
+      width: 45px;
+      height: 45px;
+      padding: 10px;
+      border-radius: 50%;
+      background-color: white;
+      transition: transform 0.3s ease;
+    }
+
+    .real-social-icons a:hover img {
+      transform: scale(1.1);
+    }
+
+.custom-footer {
+  background-color: #0a3d62;
+  color: white;
+  padding: 2rem;
+  font-size: 0.95rem;
+}
+
+.footer-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  text-align: left;
+  gap: 2rem;
+}
+
+.footer-col {
+  flex: 1 1 200px;
+  min-width: 200px;
+}
+
+.footer-col h4 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.footer-col p {
+  margin: 0.4rem 0;
+  display: flex;
+  align-items: center;
+}
+
+.footer-col .icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.5rem;
+  filter: invert(1);
+}
+
+.clickable {
+    cursor: pointer;
+    text-decoration: none; 
+    color: inherit; 
+}
+
+.footer-bottom {
+  text-align: center;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  border-top: 1px solid #fff;
+  padding-top: 1rem;
+}
+
+    /* Mobile friendly responsive tweaks */
+    @media (max-width: 600px) {
+  header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+  }
+
+  #menuToggle {
+    display: block;
+  }
+
+  nav#navLinks {
+    display: none;
+    flex-direction: column;
+    background-color: #0a3d62;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 1rem 0;
+    border-radius: 0 0 12px 12px;
+  }
+
+  nav#navLinks.active {
+    display: flex;
+  }
+}
+  </style>
+</head>
+<body>
+
+  <header>
+  <h1>Yash Cyber Cafe</h1>
+
+  <!-- Hamburger Button -->
+  <button id="menuToggle" aria-label="Toggle navigation">
+  <span class="bar"></span>
+  <span class="bar"></span>
+  <span class="bar"></span>
+</button>
+
+  <!-- Nav Links -->
+  <nav id="navLinks">
+    <a href="{{ url_for('login_user') }}">Home</a>
+    <a onclick="openModal('loginModal')">Login</a>
+    <a onclick="openModal('registerModal')">Register</a>
+  </nav>
+</header>
+
+  <div class="hero">
+  <div class="parallax-bg" id="parallax-bg"></div>
+  <div class="hero-content">
+    <h2>Welcome to Yash Cyber Cafe</h2>
+    <p>Your trusted place for all online services, government forms, and computer solutions.</p>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Our Services</h3>
+  <p>We provide assistance with all types of online forms, printing, scanning, and more.</p>
+</div>
+
+  <footer class="custom-footer">
+  <div class="footer-container">
+    <!-- About Us -->
+    <div class="footer-col">
+      <h4>About Us</h4>
+      <p class="clickable" onclick="openModal('aboutModal')">About Us</p>
+      <p>Contact Us</p>
+     <a href="tel:+917987190554" style="text-decoration: none; color: inherit;">
+  <p><img src="https://img.icons8.com/ios-filled/24/000000/phone.png" alt="Call" class="icon" /> Call Us</p>
+</a>
+
+<a href="https://wa.me/919202642846" target="_blank" style="text-decoration: none; color: inherit;">
+  <p><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg" alt="WhatsApp" class="icon" /> WhatsApp</p>
+</a>
+    </div>
+
+    <!-- Social -->
+    <div class="footer-col">
+      <h4>Social</h4>
+      <a href="https://www.instagram.com/yash_cyber_cafe?igsh=MTZ1OGdzMzlpdzRvZQ==" target="_blank" style="text-decoration: none; color: inherit;">
+  <p><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" class="icon" /> Instagram</p>
+</a>
+
+<a href="https://www.facebook.com/profile.php?id=61575768090602&mibextid=ZbWKwL" target="_blank" style="text-decoration: none; color: inherit;">
+  <p><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/facebook.svg" class="icon" /> Facebook</p>
+</a>
+
+<a href="https://www.threads.net/@yash_cyber_cafe" target="_blank" style="text-decoration: none; color: inherit;">
+  <p><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/threads.svg" class="icon" /> Threads</p>
+</a>
+
+<a href="https://x.com/iamyash_79?t=8bTj9BfM4VohCpQqifpFnQ&s=08" target="_blank" style="text-decoration: none; color: inherit;">
+  <p><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/x.svg" class="icon" /> X/Twitter</p>
+</a>
+
+<a href="https://youtube.com/@iamyash_79?si=te2v0KuUKJ8sgXOd" target="_blank" style="text-decoration: none; color: inherit;">
+  <p><img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/youtube.svg" class="icon" /> YouTube</p>
+</a>
+
+    </div>
+
+    <!-- Quick Links -->
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+<ul style="list-style: none; padding: 0; margin: 0;">
+  <li><a href="#" style="text-decoration: none; color: inherit;">Track Order</a></li>
+  <li><a href="#" style="text-decoration: none; color: inherit;">Terms & Conditions</a></li>
+  <li><a href="#" style="text-decoration: none; color: inherit;">Return & Refund Policy</a></li>
+  <li><a href="#" style="text-decoration: none; color: inherit;">FAQ</a></li>
+  <li><a href="#" style="text-decoration: none; color: inherit;">Privacy</a></li>
+</ul>
+    </div>
+
+    <!-- Get in Touch -->
+    <div class="footer-col">
+      <h4>Get in touch</h4>
+      <p>Email Us:</p>
+      <p>syashwant682@gmail.com</p>
+      <p>Phone Support:</p>
+      <p>+91 7987190554</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>All Rights Reserved © Yash Cyber Cafe</p>
+  </div>
+
+  <!-- About Modal -->
+  <div class="modal" id="aboutModal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal('aboutModal')">&times;</span>
+      <h3>About Us</h3>
+      <p>Put your about us content here...</p>
+    </div>
+  </div>
+</footer>
+
+
+  <!-- Login Modal -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('loginModal')">&times;</span>
+    
+    <h2 style="color:#1e3799; margin-bottom:1rem;">Login to Your Account</h2>
+
+    <form action="{{ url_for('login') }}" method="POST" autocomplete="off">
+      <label for="login_email">Email</label>
+      <input type="email" id="login_email" name="email" required placeholder="you@example.com" />
+
+      <label for="login_password">Password</label>
+      <input type="password" id="login_password" name="password" required placeholder="Enter your password" />
+      
+      <!-- Forgot Password link -->
+      <p style="margin-top: 0.3rem; margin-bottom: 1rem; font-size: 0.9rem; text-align: right;">
+        <a href="{{ url_for('forgot_password') }}" style="color:#1e3799; text-decoration: none;">Forgot password?</a>
+      </p>
+
+      <input type="submit" value="Login" />
+    </form>
+
+    <!-- Not registered link -->
+    <p style="margin-top: 1rem; text-align: center;">
+      Not registered? 
+      <button type="button" onclick="openRegisterModal()" style="background:none; border:none; color:#1e3799; cursor:pointer; text-decoration: none; padding:0;">
+        Click here
+      </button>
+    </p>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div id="registerModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('registerModal')">&times;</span>
+
+    <h2 style="color:#1e3799; margin-bottom:1rem;">Create a New Account</h2>
+
+    <!-- Flash messages for register -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category == 'register_error' %}
+            <div class="flash-message flash-error">{{ message }}</div>
+          {% elif category == 'register_success' %}
+            <div class="flash-message flash-success">{{ message }}</div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
+      <label for="full_name">Full Name</label>
+      <input type="text" id="full_name" name="full_name" required placeholder="Full name" />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required placeholder="you@example.com" />
+
+      <label for="contact">Mobile Number</label>
+      <input type="tel" id="contact" name="contact" required placeholder="123-456-7890" />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required placeholder="Password" />
+
+      <label for="confirm_password">Confirm Password</label>
+      <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm Password" />
+
+      <input type="submit" value="Register" />
+    </form>
+
+    <!-- Login link -->
+    <p style="margin-top: 1rem; text-align: center;">
+      Already have an account? 
+      <button type="button" onclick="openLoginModal()" style="background:none; border:none; color:#1e3799; cursor:pointer; text-decoration: none; padding:0;">
+        Login
+      </button>
+    </p>
+  </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, _ in messages %}
+    {% if category.startswith("register_") %}
+      <script>
+        window.addEventListener("DOMContentLoaded", function () {
+          openModal("registerModal");
+        });
+      </script>
+    {% elif category.startswith("login_") %}
+      <script>
+        window.addEventListener("DOMContentLoaded", function () {
+          openModal("loginModal");
+        });
+      </script>
+    {% endif %}
+  {% endfor %}
+{% endwith %}
+
+<script>
+  // Open specific modal (flex display)
+  function openModal(id) {
+    document.getElementById(id).style.display = 'flex';
+  }
+
+  // Close specific modal
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  // Open login modal and hide register modal
+  function openLoginModal() {
+    closeModal('registerModal');
+    openModal('loginModal');
+  }
+
+  // Open register modal and hide login modal
+  function openRegisterModal() {
+    closeModal('loginModal');
+    openModal('registerModal');
+  }
+
+  // Close modal when clicking outside modal content
+  window.onclick = function(event) {
+    document.querySelectorAll('.modal').forEach(modal => {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  };
+
+  // Mobile nav toggle script
+  const menuToggle = document.getElementById('menuToggle');
+  const navLinks = document.getElementById('navLinks');
+
+  if (menuToggle && navLinks) {
+    menuToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+      const expanded = menuToggle.getAttribute('aria-expanded') === 'true';
+      menuToggle.setAttribute('aria-expanded', !expanded);
+    });
+  }
+
+  // Parallax scroll effect
+  window.addEventListener("scroll", function () {
+    const scrollTop = window.scrollY;
+    const parallax = document.getElementById("parallax-bg");
+    if (parallax) {
+      parallax.style.transform = "translateY(" + scrollTop * 0.5 + "px)";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -8,12 +8,12 @@
 </head>
 <body class="bg-gray-100 font-sans">
   <div class="flex">
-    
+
     <!-- Sidebar -->
     {% include 'sidebar.html' %}
 
     <!-- Main Content -->
-     <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden">
+    <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden">
       <header class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-semibold">Sales Overview</h1>
       </header>
@@ -22,36 +22,51 @@
       <div class="bg-white p-4 rounded shadow mb-6">
         <h2 class="font-semibold mb-4">Sales Analytics</h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-         
+
           <!-- Total Orders -->
-<a href="{{ url_for('orders') }}" class="block bg-blue-100 p-4 rounded hover:bg-blue-200">
-  <div class="text-sm text-gray-600">Total Orders</div>
-  <div class="text-xl font-bold">{{ total_orders }}</div>
-</a>
-          
-<!-- Delivered Orders -->
-<a href="{{ url_for('orders', status='delivered') }}" class="block bg-green-100 p-4 rounded hover:bg-green-200">
-  <div class="text-sm text-gray-600">Delivered Orders</div>
-  <div class="text-xl font-bold">{{ delivered_orders }}</div>
-</a>
+          <a href="{{ url_for('orders') }}" class="block bg-blue-100 p-4 rounded hover:bg-blue-200">
+            <div class="text-sm text-gray-600">Total Orders</div>
+            <div class="text-xl font-bold">{{ total_orders }}</div>
+          </a>
+
+          <!-- Delivered Orders -->
+          <a href="{{ url_for('orders', status='delivered') }}" class="block bg-green-100 p-4 rounded hover:bg-green-200">
+            <div class="text-sm text-gray-600">Delivered Orders</div>
+            <div class="text-xl font-bold">{{ delivered_orders }}</div>
+          </a>
 
           <!-- Pending Orders -->
-<a href="{{ url_for('orders', status='pending') }}" class="block bg-yellow-100 p-4 rounded hover:bg-yellow-200">
-  <div class="text-sm text-gray-600">Pending Orders</div>
-  <div class="text-xl font-bold">{{ pending_orders }}</div>
-</a>
+          <a href="{{ url_for('orders', status='pending') }}" class="block bg-yellow-100 p-4 rounded hover:bg-yellow-200">
+            <div class="text-sm text-gray-600">Pending Orders</div>
+            <div class="text-xl font-bold">{{ pending_orders }}</div>
+          </a>
 
-          <!-- Total Revenue (no filter) -->
-<div class="bg-purple-100 p-4 rounded">
-  <div class="text-sm text-gray-600">Total Revenue</div>
-  <div class="text-xl font-bold">₹{{ total_revenue }}</div>
-</div>
+          <!-- Online Revenue -->
+          <div class="bg-purple-100 p-4 rounded">
+            <div class="text-sm text-gray-600">Online Revenue</div>
+            <div class="text-xl font-bold">₹{{ total_revenue }}</div>
+          </div>
+        </div>
+
+        <!-- Offline & Grand Revenue -->
+        <div class="grid grid-cols-2 md:grid-cols-2 gap-4 text-center mt-6">
+          <!-- Offline Revenue -->
+          <div class="bg-indigo-100 p-4 rounded">
+            <div class="text-sm text-gray-600">Offline Revenue</div>
+            <div class="text-xl font-bold">₹{{ offline_revenue }}</div>
+          </div>
+
+          <!-- Grand Revenue -->
+          <div class="bg-green-200 p-4 rounded">
+            <div class="text-sm text-gray-700 font-medium">Grand Revenue</div>
+            <div class="text-xl font-bold text-black">₹{{ grand_revenue }}</div>
+          </div>
         </div>
       </div>
 
-      <!-- Orders Table -->
-      <div class="bg-white p-4 rounded shadow">
-        <h2 class="font-semibold mb-4">All Orders</h2>
+      <!-- Online Orders Table -->
+      <div class="bg-white p-4 rounded shadow mb-8">
+        <h2 class="font-semibold mb-4">All Orders (Online)</h2>
         <div class="overflow-x-auto">
           <table class="min-w-full table-auto text-sm">
             <thead>
@@ -72,10 +87,10 @@
                   <td class="px-4 py-2">₹{{ order.amount }}</td>
                   <td class="px-4 py-2">
                     <span class="px-2 py-1 rounded text-xs 
-                      {% if order.status == 'delivered' %}bg-blue-200 text-black-800
-                      {% elif order.status == 'pending' %}bg-yellow-200 text-black-800
-                      {% elif order.status == 'cancelled' %}bg-red-200 text-black-800
-                      {% else %}bg-green-200 text-black-800{% endif %}">
+                      {% if order.status == 'delivered' %}bg-blue-200 text-black
+                      {% elif order.status == 'pending' %}bg-yellow-200 text-black
+                      {% elif order.status == 'cancelled' %}bg-red-200 text-black
+                      {% else %}bg-green-200 text-black{% endif %}">
                       {{ order.status }}
                     </span>
                   </td>
@@ -90,6 +105,37 @@
           {% endif %}
         </div>
       </div>
+
+      <!-- Offline Bills Table -->
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-4">Offline Bills</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full table-auto text-sm">
+            <thead>
+              <tr class="bg-gray-100 text-left">
+                <th class="px-4 py-2">Name</th>
+                <th class="px-4 py-2">Contact</th>
+                <th class="px-4 py-2">Amount</th>
+                <th class="px-4 py-2">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bill in bills %}
+              <tr class="border-b hover:bg-gray-50">
+                <td class="px-4 py-2">{{ bill.name }}</td>
+                <td class="px-4 py-2">{{ bill.contact }}</td>
+                <td class="px-4 py-2 font-semibold text-green-600">₹{{ bill.amount }}</td>
+                <td class="px-4 py-2">{{ bill.date }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% if bills|length == 0 %}
+            <p class="text-gray-500 p-4">No offline bills recorded.</p>
+          {% endif %}
+        </div>
+      </div>
+
     </main>
   </div>
 </body>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Services - {{ short_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="flex min-h-screen">
+    {% set current_page = 'items' %}
+    {% include 'sidebar.html' %}
+
+    <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 relative">
+      <!-- Tabs -->
+      <div class="flex space-x-4 border-b border-gray-200 mb-6">
+        <a 
+          href="/product"
+          class="px-4 py-2 text-sm border-b-2 text-gray-600 hover:text-blue-600 hover:border-blue-400 border-transparent"
+        >
+          Product
+        </a>
+        <a 
+          href="/services"
+          class="px-4 py-2 text-sm border-b-2 font-semibold border-blue-600 text-blue-600"
+        >
+          Services
+        </a>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4">
+            {% for category, message in messages %}
+              <div class="p-3 rounded text-white {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% else %}bg-blue-600{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for service in services %}
+        <div class="bg-white rounded-lg shadow-md p-4">
+          <h2 class="text-lg font-semibold">{{ service.name }}</h2>
+          <p class="text-sm text-gray-600 mb-1">
+            {% if service.discount_price %}
+              <span class="line-through">₹{{ service.price }}</span>
+              <span class="text-green-700 font-bold ml-2">₹{{ service.discount_price }}</span>
+            {% else %}
+              ₹{{ service.price }}
+            {% endif %}
+          </p>
+          <p class="text-gray-800 text-sm mb-4">{{ service.description }}</p>
+
+          <div class="flex space-x-2">
+            <form method="POST" action="/delete_service/{{ service.id }}" onsubmit="return confirm('Delete this service?')">
+              <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Delete</button>
+            </form>
+            <button 
+              class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm"
+              onclick="triggerEdit(this)"
+              data-id="{{ service.id }}"
+              data-name="{{ service.name|escape }}"
+              data-price="{{ service.price }}"
+              data-discount="{{ service.discount_price or '' }}"
+              data-description="{{ service.description|escape }}"
+            >Edit</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Floating Add Button -->
+      <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-full shadow-lg z-50">+ Add Service</button>
+    </main>
+  </div>
+
+  <!-- Add Modal -->
+  <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow w-full max-w-md">
+      <h2 class="text-xl font-semibold mb-4">Add Service</h2>
+      <form method="POST" action="/services">
+        <input name="name" placeholder="Name" required class="w-full mb-2 px-3 py-2 border rounded" />
+        <input name="price" type="number" placeholder="Price" required class="w-full mb-2 px-3 py-2 border rounded" />
+        <input name="discount_price" type="number" placeholder="Discount Price (optional)" class="w-full mb-2 px-3 py-2 border rounded" />
+        <textarea name="description" placeholder="Description" class="w-full mb-2 px-3 py-2 border rounded"></textarea>
+        <div class="flex justify-end space-x-2">
+          <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow w-full max-w-md">
+      <h2 class="text-xl font-semibold mb-4">Edit Service</h2>
+      <form id="editForm" method="POST">
+        <input id="editName" name="name" required class="w-full mb-2 px-3 py-2 border rounded" />
+        <input id="editPrice" name="price" type="number" required class="w-full mb-2 px-3 py-2 border rounded" />
+        <input id="editDiscount" name="discount_price" type="number" class="w-full mb-2 px-3 py-2 border rounded" />
+        <textarea id="editDesc" name="description" class="w-full mb-2 px-3 py-2 border rounded"></textarea>
+        <div class="flex justify-end space-x-2">
+          <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function triggerEdit(button) {
+      const id = button.dataset.id;
+      const name = button.dataset.name;
+      const price = button.dataset.price;
+      const discount = button.dataset.discount;
+      const desc = button.dataset.description;
+
+      document.getElementById('editForm').action = '/edit_service/' + id;
+      document.getElementById('editName').value = name;
+      document.getElementById('editPrice').value = price;
+      document.getElementById('editDiscount').value = discount;
+      document.getElementById('editDesc').value = desc;
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

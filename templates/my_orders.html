@@ -191,7 +191,7 @@
               <template x-for="(item, index) in receipt.items" :key="index">
                 <tr>
                   <td class="border px-2 py-1" x-text="index + 1"></td>
-                  <td class="border px-2 py-1" x-text="item.catalogName"></td>
+                  <td class="border px-2 py-1" x-text="item.productName"></td>
                   <td class="border px-2 py-1">
                     <span 
                       :class="item.discountedPrice < item.price ? 'line-through text-red-500' : ''"

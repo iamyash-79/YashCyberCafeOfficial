@@ -121,18 +121,18 @@
           </a>
         </li>
         <li>
-          <a href="/sales" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/sales' else '' }}">
-            <span>💰</span><span>Sales</span>
-          </a>
-        </li>
-        <li>
-          <a href="/catalog" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/catalog' else '' }}">
-            <span>📚</span><span>Catalog</span>
+          <a href="/product" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path.startswith('/product') or request.path.startswith('/services') else '' }}">
+            <span>📚</span><span>Product</span>
           </a>
         </li>
         <li>
           <a href="/inbox" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/inbox' else '' }}">
             <span>📬</span><span>Inbox</span>
+          </a>
+        </li>
+        <li>
+          <a href="/bill" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/bill' else '' }}">
+            <span>🧾</span><span>Bill</span>
           </a>
         </li>
         {% endif %}
@@ -150,13 +150,13 @@
         {% endif %}
         {% if user.role == 'owner' %}
         <li>
-          <a href="/create_admin" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/create_admin' else '' }}">
-            <span>👨‍💼</span><span>Admin</span>
+          <a href="/sales" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/sales' else '' }}">
+            <span>💰</span><span>Sales</span>
           </a>
         </li>
         <li>
-          <a href="/soon" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/soon' else '' }}">
-            <span>💭</span><span>Soon</span>
+          <a href="/create_admin" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/create_admin' else '' }}">
+            <span>👨‍💼</span><span>Admin</span>
           </a>
         </li>
         {% endif %}
