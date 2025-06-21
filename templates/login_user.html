@@ -5,184 +5,221 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Yash Cyber Cafe</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-yHfR8E9qFw2F4LFq+2V4Rn8Rks7h+nU4U9ppF2SyIpkl1bMK6TLrd1qZ1FgHzH6vmSh6IzZdxKUm6pCqeT1x1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-    body { background: #f0f2f5; color: #333; }
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background: #0a0f1c;
+      color: #ffffff;
+    }
+
     header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-  background-color: #0a3d62;
-  padding: 0.5rem 1.5rem; /* reduced padding */
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #fff;
-  }
-    header h1 { font-size: 1.8rem; }
-    nav a { margin-left: 1.5rem; text-decoration: none; color: #fff; font-weight: 500; cursor: pointer; }
-    nav a:hover { text-decoration: none; }
-    /* Default hidden hamburger */
-#menuToggle {
-  display: none;
-}
-
-@media (max-width: 600px) {
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  #menuToggle {
-  display: block;
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 1600;
-}
-
-#menuToggle .bar {
-  display: block;
-  width: 25px;
-  height: 3px;
-  margin: 5px auto;
-  background-color: white; /* or your primary color */
-  transition: all 0.3s ease;
-}
-
-  nav#navLinks {
-    display: none;
-    flex-direction: column;
-    background-color: #0a3d62;
-    position: absolute;
-    top: 56px;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    padding: 1rem 0;
-    border-radius: 0 0 12px 12px;
-  }
-
-  nav#navLinks.active {
-    display: flex;
-  }
-
-  nav#navLinks a {
-    margin: 0.5rem 0;
-    text-align: center;
-    font-size: 1.1rem;
-    color: white;
-  }
-}
-.hero {
-  position: relative;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.parallax-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 150%;
-  background: linear-gradient(to right, rgba(30, 55, 153, 0.7), rgba(74, 105, 189, 0.7)),
-              url('/static/images/background.png') no-repeat center center;
-  background-size: cover;
-  z-index: 1;
-  transform: translateY(0);
-  will-change: transform;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  text-align: center;
-  padding: 0 2rem;
-}
-
-.hero h2 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-}
-
-.hero p {
-  font-size: 1.2rem;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.section {
-  padding: 3rem 2rem;
-  text-align: center;
-}
-
-.section h3 {
-  margin-bottom: 1rem;
-  color: #1e3799;
-}
-
-footer {
-  background-color: #0a3d62;
-  color: white;
-  padding: 2rem;
-  text-align: center;
-}
-
-.social-icons a {
-  color: white;
-  margin: 0 0.5rem;
-  font-size: 1.4rem;
-  text-decoration: none;
-}
-
-.terms {
-  margin-top: 1rem;
-}
-
-    /* Modal styles */
-    .modal {
-  display: none;
-  position: fixed;
-  z-index: 2000; /* Increased to appear above header */
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  justify-content: center;
-  align-items: center;
-  }
-    .modal-content {
-      background: rgba(255, 255, 255, 0.30);
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      z-index: 1000;
+      background: rgba(10, 20, 40, 0.7);
       backdrop-filter: blur(8px);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #00ffe5;
+      box-shadow: 0 0 12px #00ffe5;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      text-shadow: 0 0 5px #00ffe5;
+    }
+
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 500;
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: #00ffe5;
+      transition: 0.3s;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    #menuToggle {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+
+      #menuToggle {
+        display: block;
+        background: none;
+        border: none;
+        cursor: pointer;
+        z-index: 1600;
+      }
+
+      #menuToggle .bar {
+        display: block;
+        width: 25px;
+        height: 3px;
+        margin: 5px auto;
+        background-color: #00ffe5;
+        transition: all 0.3s ease;
+      }
+
+      nav#navLinks {
+        display: none;
+        flex-direction: column;
+        background-color: rgba(10, 20, 40, 0.95);
+        backdrop-filter: blur(10px);
+        position: absolute;
+        top: 56px;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        padding: 1rem 0;
+        border-radius: 0 0 12px 12px;
+      }
+
+      nav#navLinks.active {
+        display: flex;
+      }
+
+      nav#navLinks a {
+        margin: 0.5rem 0;
+        text-align: center;
+        font-size: 1.1rem;
+        color: #00ffe5;
+      }
+    }
+
+    .hero {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .parallax-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 150%;
+      background: linear-gradient(to right, rgba(30, 55, 153, 0.6), rgba(74, 105, 189, 0.5)),
+                  url('/static/images/background.png') no-repeat center center;
+      background-size: cover;
+      z-index: 1;
+      transform: translateY(0);
+      will-change: transform;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #ffffff;
+      text-align: center;
+      padding: 0 2rem;
+    }
+
+    .hero h2 {
+      font-size: 2.8rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px #00ffe5, 0 0 30px #00ffe5;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+      color: #d0f0ff;
+      text-shadow: 0 0 4px #00ffe5;
+    }
+
+    .section {
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .section h3 {
+      margin-bottom: 1rem;
+      color: #00ffe5;
+      text-shadow: 0 0 8px #00ffe5;
+    }
+
+    footer {
+      background-color: #0a3d62;
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .social-icons a {
+      color: #00ffe5;
+      margin: 0 0.5rem;
+      font-size: 1.4rem;
+      text-decoration: none;
+    }
+
+    .terms {
+      margin-top: 1rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0; top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: rgba(0, 255, 255, 0.05);
+      border: 1px solid rgba(0, 255, 255, 0.3);
+      backdrop-filter: blur(12px);
       padding: 2rem;
       border-radius: 12px;
       width: 90%;
       max-width: 500px;
       position: relative;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0 20px #00ffe5;
       overflow-y: auto;
       max-height: 90vh;
-      /* add these lines to hide scrollbar */
-      scrollbar-width: none;  /* Firefox */
-      -ms-overflow-style: none;  /* IE 10+ */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
 
-    /* for Chrome, Safari, Opera */
     .modal-content::-webkit-scrollbar {
       display: none;
     }
+
     .modal-close {
       position: absolute;
       top: 10px;
@@ -190,53 +227,62 @@ footer {
       font-size: 25px;
       font-weight: 700;
       cursor: pointer;
-      color: #444;
+      color: #ff00ff;
     }
 
-    /* Forms */
     form {
       display: flex;
       flex-direction: column;
     }
+
     label {
       font-weight: 600;
       margin-bottom: 0.25rem;
-      color: #1e3799;
+      color: #00ffe5;
     }
+
     input[type="text"],
     input[type="email"],
     input[type="password"],
     input[type="tel"],
     input[type="file"] {
-      padding: 0.5rem;
+      padding: 0.6rem;
       margin-bottom: 1rem;
-      border: 1px solid #bbb;
+      border: 1px solid #555;
+      background-color: rgba(255, 255, 255, 0.05);
       border-radius: 6px;
       font-size: 1rem;
+      color: #fff;
     }
+
     input[type="submit"], button {
-      background-color: #1e3799;
+      background: linear-gradient(45deg, #00ffe5, #1e90ff);
       color: white;
       padding: 0.75rem;
       font-weight: 600;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: 0.3s ease;
     }
+
     input[type="submit"]:hover, button:hover {
-      background-color: #4a69bd;
+      background: linear-gradient(45deg, #1e90ff, #00ffe5);
+      box-shadow: 0 0 12px #00ffe5;
     }
+
     .flash-message {
       padding: 0.75rem 1rem;
       border-radius: 8px;
       margin-bottom: 1rem;
       font-weight: 600;
     }
+
     .flash-error {
-      background-color: #e74c3c;
+      background-color: #ff4d4d;
       color: white;
     }
+
     .flash-success {
       background-color: #27ae60;
       color: white;
@@ -254,66 +300,68 @@ footer {
       height: 45px;
       padding: 10px;
       border-radius: 50%;
-      background-color: white;
-      transition: transform 0.3s ease;
+      background-color: #0a3d62;
+      transition: 0.3s ease;
+      box-shadow: 0 0 10px #00ffe5;
     }
 
     .real-social-icons a:hover img {
       transform: scale(1.1);
+      box-shadow: 0 0 20px #00ffe5;
     }
 
-.custom-footer {
-  background-color: #0a3d62;
-  color: white;
-  padding: 2rem;
-  font-size: 0.95rem;
-}
+    .custom-footer {
+      background-color: #0a3d62;
+      color: white;
+      padding: 2rem;
+      font-size: 0.95rem;
+    }
 
-.footer-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  text-align: left;
-  gap: 2rem;
-}
+    .footer-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      text-align: left;
+      gap: 2rem;
+    }
 
-.footer-col {
-  flex: 1 1 200px;
-  min-width: 200px;
-}
+    .footer-col {
+      flex: 1 1 200px;
+      min-width: 200px;
+    }
 
-.footer-col h4 {
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  color: #fff;
-}
+    .footer-col h4 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #00ffe5;
+    }
 
-.footer-col p {
-  margin: 0.4rem 0;
-  display: flex;
-  align-items: center;
-}
+    .footer-col p {
+      margin: 0.4rem 0;
+      display: flex;
+      align-items: center;
+    }
 
-.footer-col .icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 0.5rem;
-  filter: invert(1);
-}
+    .footer-col .icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 0.5rem;
+      filter: invert(1);
+    }
 
-.clickable {
-    cursor: pointer;
-    text-decoration: none; 
-    color: inherit; 
-}
+    .clickable {
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
 
-.footer-bottom {
-  text-align: center;
-  margin-top: 2rem;
-  font-size: 0.9rem;
-  border-top: 1px solid #fff;
-  padding-top: 1rem;
-}
+    .footer-bottom {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      border-top: 1px solid #00ffe5;
+      padding-top: 1rem;
+    }
 
     /* Mobile friendly responsive tweaks */
     @media (max-width: 600px) {
@@ -352,15 +400,14 @@ footer {
 </head>
 <body>
 
-  <header>
+<header>
   <h1>Yash Cyber Cafe</h1>
-
   <!-- Hamburger Button -->
   <button id="menuToggle" aria-label="Toggle navigation">
-  <span class="bar"></span>
-  <span class="bar"></span>
-  <span class="bar"></span>
-</button>
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </button>
 
   <!-- Nav Links -->
   <nav id="navLinks">
@@ -370,7 +417,7 @@ footer {
   </nav>
 </header>
 
-  <div class="hero">
+<div class="hero">
   <div class="parallax-bg" id="parallax-bg"></div>
   <div class="hero-content">
     <h2>Welcome to Yash Cyber Cafe</h2>
@@ -378,10 +425,212 @@ footer {
   </div>
 </div>
 
-<div class="section">
-  <h3>Our Services</h3>
-  <p>We provide assistance with all types of online forms, printing, scanning, and more.</p>
+<div class="section" id="services" style="padding: 40px; background: rgba(0, 255, 255, 0.05); backdrop-filter: blur(8px); border-top: 2px solid #00ffe5; border-bottom: 2px solid #00ffe5;">
+  <h3 style="font-size: 28px; color: #00ffe5; text-align: center; margin-bottom: 20px; text-shadow: 0 0 6px #00ffe5;">Our Services</h3>
+
+  <div class="scroll-wrapper">
+    <div class="scroll-content">
+      <!-- Service Items (duplicated for looping scroll) -->
+      {% for i in range(2) %}
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/716/716784.png" alt="Printing"><p>Printing</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" alt="Scanning"><p>Scanning</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/2920/2920254.png" alt="Online Forms"><p>Online Forms</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/2331/2331942.png" alt="Lamination"><p>Lamination</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/2972/2972692.png" alt="Photocopy"><p>Photocopy</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/483/483356.png" alt="Internet"><p>Internet</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/3159/3159020.png" alt="Passport Photo"><p>Passport Photo</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/2331/2331966.png" alt="Money Services"><p>Money Transfer</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/3771/3771336.png" alt="Banking"><p>Bank Account</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/2760/2760652.png" alt="PAN Card"><p>PAN Card</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/3242/3242257.png" alt="SIM Activation"><p>SIM Activation</p></div>
+        <div class="service"><img src="https://cdn-icons-png.flaticon.com/512/2907/2907480.png" alt="Recharges"><p>Recharges</p></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <style>
+    .scroll-wrapper {
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .scroll-content {
+      display: flex;
+      gap: 40px;
+      animation: scroll-left 60s linear infinite;
+    }
+
+    .service {
+      flex: 0 0 auto;
+      text-align: center;
+      width: 120px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 6px rgba(0, 255, 255, 0.2);
+    }
+
+    .service img {
+      width: 70px;
+      height: 70px;
+      margin-bottom: 8px;
+      transition: transform 0.3s ease;
+    }
+
+    .service p {
+      font-size: 14px;
+      color: #00ffe5;
+      text-shadow: 0 0 3px #00ffe5;
+      margin: 0;
+    }
+
+    .scroll-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scroll-wrapper {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .service:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 0 15px #00ffe5;
+    }
+
+    .service:hover img {
+      transform: scale(1.1);
+    }
+
+    @keyframes scroll-left {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .scroll-wrapper:hover .scroll-content {
+      animation-play-state: paused;
+    }
+
+    @media (max-width: 768px) {
+      .service {
+        width: 90px;
+      }
+      .service img {
+        width: 60px;
+        height: 60px;
+      }
+      .service p {
+        font-size: 12px;
+      }
+    }
+  </style>
 </div>
+
+<section id="products" class="product-section">
+  <h2 style="color: #00ffe5; text-align: center; text-shadow: 0 0 6px #00ffe5; margin-bottom: 20px;">Available Products</h2>
+  <div class="product-container" id="productScroll">
+    {% for product in product_items %}
+    <div class="product-card">
+      {% if product.image_url %}
+        <img src="{{ url_for('static', filename='uploads/' ~ product.image_url) }}" alt="{{ product.name }}">
+      {% else %}
+        <img src="{{ url_for('static', filename='uploads/default.jpg') }}" alt="No Image">
+      {% endif %}
+      <h3>{{ product.name }}</h3>
+      <p>₹{{ product.price }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<style>
+  .product-section {
+    padding: 3rem 2rem;
+    background: rgba(0, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    border-top: 2px solid #00ffe5;
+    border-bottom: 2px solid #00ffe5;
+  }
+
+  .product-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding: 1rem;
+    scroll-behavior: smooth;
+  }
+
+  .product-container::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .product-container::-webkit-scrollbar-thumb {
+    background: #00ffe5;
+    border-radius: 10px;
+  }
+
+  .product-card {
+    flex: 0 0 auto;
+    width: 200px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(6px);
+    padding: 1rem;
+    border-radius: 14px;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    text-align: center;
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 0 15px #00ffe5;
+  }
+
+  .product-card img {
+    max-width: 100%;
+    height: 140px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-card h3 {
+    font-size: 1.1rem;
+    color: #00ffe5;
+    text-shadow: 0 0 4px #00ffe5;
+    margin-bottom: 0.3rem;
+  }
+
+  .product-card p {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1rem;
+    text-shadow: 0 0 4px #00ffe5;
+  }
+
+  @media (max-width: 768px) {
+    .product-card {
+      width: 160px;
+      padding: 0.8rem;
+    }
+
+    .product-card img {
+      height: 120px;
+    }
+
+    .product-card h3 {
+      font-size: 1rem;
+    }
+
+    .product-card p {
+      font-size: 0.9rem;
+    }
+  }
+</style>
 
   <footer class="custom-footer">
   <div class="footer-container">
@@ -425,16 +674,16 @@ footer {
     </div>
 
     <!-- Quick Links -->
-    <div class="footer-col">
-      <h4>Quick Links</h4>
-<ul style="list-style: none; padding: 0; margin: 0;">
-  <li><a href="#" style="text-decoration: none; color: inherit;">Track Order</a></li>
-  <li><a href="#" style="text-decoration: none; color: inherit;">Terms & Conditions</a></li>
-  <li><a href="#" style="text-decoration: none; color: inherit;">Return & Refund Policy</a></li>
-  <li><a href="#" style="text-decoration: none; color: inherit;">FAQ</a></li>
-  <li><a href="#" style="text-decoration: none; color: inherit;">Privacy</a></li>
-</ul>
-    </div>
+   <div class="footer-col">
+  <h4>Quick Links</h4>
+  <ul style="list-style: none; padding: 0; margin: 0;">
+    <li><a href="/quick-links#track" style="text-decoration: none; color: inherit;">Track Order</a></li>
+    <li><a href="/quick-links#terms" style="text-decoration: none; color: inherit;">Terms & Conditions</a></li>
+    <li><a href="/quick-links#return" style="text-decoration: none; color: inherit;">Return & Refund Policy</a></li>
+    <li><a href="/quick-links#faq" style="text-decoration: none; color: inherit;">FAQ</a></li>
+    <li><a href="/quick-links#privacy" style="text-decoration: none; color: inherit;">Privacy</a></li>
+  </ul>
+</div>
 
     <!-- Get in Touch -->
     <div class="footer-col">
@@ -452,12 +701,23 @@ footer {
 
   <!-- About Modal -->
   <div class="modal" id="aboutModal">
-    <div class="modal-content">
-      <span class="modal-close" onclick="closeModal('aboutModal')">&times;</span>
-      <h3>About Us</h3>
-      <p>Put your about us content here...</p>
-    </div>
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('aboutModal')">&times;</span>
+    <h3>About Us</h3>
+    <p>
+      Welcome to <strong>Yash Cyber Cafe</strong> – your one-stop destination for all your digital, printing, and online service needs. Whether you're looking to print important documents, access the internet, or complete government and online tasks, we’ve got you covered with fast, reliable, and affordable services.
+      <br><br>
+      At Yash Cyber Cafe, we provide:
+      <ul>
+        <li><strong>Printing & Scanning Services</strong> – High-quality prints for documents, photos, projects, and more.</li>
+        <li><strong>Online Services</strong> – From form filling, bill payments, and online registrations to exam applications and more.</li>
+        <li><strong>Computer Access</strong> – Smooth and secure internet browsing for study, work, or leisure.</li>
+        <li><strong>Tech Support</strong> – Friendly assistance to help you complete tasks easily and efficiently.</li>
+      </ul>
+      Customer satisfaction is at the heart of everything we do. With a commitment to accuracy, speed, and service, Yash Cyber Cafe is your trusted digital partner in town.
+    </p>
   </div>
+</div>
 </footer>
 
 
@@ -468,30 +728,53 @@ footer {
     
     <h2 style="color:#1e3799; margin-bottom:1rem;">Login to Your Account</h2>
 
+   {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      {% if category.startswith("login_") %}
+        <div class="flash-message 
+          {% if category == 'login_error' %} flash-error
+          {% elif category == 'login_success' %} flash-success
+          {% else %} flash-info {% endif %}">
+          {{ message }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
     <form action="{{ url_for('login') }}" method="POST" autocomplete="off">
       <label for="login_email">Email</label>
       <input type="email" id="login_email" name="email" required placeholder="you@example.com" />
 
       <label for="login_password">Password</label>
       <input type="password" id="login_password" name="password" required placeholder="Enter your password" />
-      
-      <!-- Forgot Password link -->
-      <p style="margin-top: 0.3rem; margin-bottom: 1rem; font-size: 0.9rem; text-align: right;">
-        <a href="{{ url_for('forgot_password') }}" style="color:#1e3799; text-decoration: none;">Forgot password?</a>
-      </p>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <label style="display: flex; align-items: center; font-size: 0.9rem; color: #1e3799;">
+          <input type="checkbox" name="remember" style="margin-right: 0.5rem;" />
+          Remember me
+        </label>
+        <a href="{{ url_for('forgot') }}" class="link-hover">Forgot password?</a>
+      </div>
 
       <input type="submit" value="Login" />
     </form>
 
-    <!-- Not registered link -->
     <p style="margin-top: 1rem; text-align: center;">
       Not registered? 
-      <button type="button" onclick="openRegisterModal()" style="background:none; border:none; color:#1e3799; cursor:pointer; text-decoration: none; padding:0;">
+      <button type="button" onclick="openRegisterModal()" class="link-hover btn-link">
         Click here
       </button>
     </p>
   </div>
 </div>
+<style>
+  .link-hover {color: #1e3799; text-decoration: none; font-weight: 500; cursor: pointer; transition: opacity 0.3s ease;}
+  .link-hover:hover {animation: blink 0.9s linear infinite;}
+  .btn-link {background: none; border: none; padding: 0;}
+  @keyframes blink {0%, 100% { opacity: 1; } 50% { opacity: 0.4; }}
+</style>
 
 <!-- Register Modal -->
 <div id="registerModal" class="modal">
@@ -500,7 +783,7 @@ footer {
 
     <h2 style="color:#1e3799; margin-bottom:1rem;">Create a New Account</h2>
 
-    <!-- Flash messages for register -->
+    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -513,86 +796,105 @@ footer {
       {% endif %}
     {% endwith %}
 
-    <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
+    <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data" autocomplete="off" style="font-size: 14px;">
+      
+      <!-- Full Name -->
       <label for="full_name">Full Name</label>
-      <input type="text" id="full_name" name="full_name" required placeholder="Full name" />
+      <input type="text" id="full_name" name="full_name" required placeholder="Full name"
+             style="width: 100%; padding: 6px 10px; height: 36px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc;" />
 
+      <!-- Email + OTP Send -->
       <label for="email">Email</label>
-      <input type="email" id="email" name="email" required placeholder="you@example.com" />
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+        <input type="email" id="email" name="email" required placeholder="you@example.com"
+               style="flex: 1; height: 36px; padding: 6px 10px; border-radius: 5px; border: 1px solid #ccc;" />
+        <button id="otp-btn" type="button" onclick="sendRegisterOTP()"
+                style="height: 36px; padding: 0 12px; background-color: #1e3799; color: white;
+                       border: none; border-radius: 5px; cursor: pointer;">
+          Send OTP
+        </button>
+      </div>
 
+      <!-- Countdown Message -->
+      <p id="otp-timer-msg" style="font-size: 13px; margin-top: 2px; margin-bottom: 8px; color: #facc15; display: none;"></p>
+
+      <!-- OTP Input -->
+      <div id="otp-section" style="display: none; margin-bottom: 10px;">
+        <label for="otp">Enter OTP</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="otp" name="otp" placeholder="6-digit code"
+                 style="flex: 1; height: 36px; padding: 6px 10px; border-radius: 5px; border: 1px solid #ccc;" />
+          <button type="button" onclick="verifyRegisterOTP()"
+                  style="height: 36px; padding: 0 12px; background-color: green; color: white;
+                         border: none; border-radius: 5px; cursor: pointer;">
+            Verify
+          </button>
+        </div>
+      </div>
+
+      <!-- Contact -->
       <label for="contact">Mobile Number</label>
-      <input type="tel" id="contact" name="contact" required placeholder="123-456-7890" />
+      <input type="tel" id="contact" name="contact" required placeholder="123-456-7890"
+             style="width: 100%; padding: 6px 10px; height: 36px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc;" />
 
+      <!-- Password -->
       <label for="password">Password</label>
-      <input type="password" id="password" name="password" required placeholder="Password" />
+      <input type="password" id="password" name="password" required placeholder="Password"
+             style="width: 100%; padding: 6px 10px; height: 36px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc;" />
 
+      <!-- Confirm Password -->
       <label for="confirm_password">Confirm Password</label>
-      <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm Password" />
+      <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm Password"
+             style="width: 100%; padding: 6px 10px; height: 36px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc;" />
 
-      <input type="submit" value="Register" />
+      <!-- Final Register Button -->
+      <button id="registerBtn" type="submit" disabled
+              style="width: 100%; padding: 10px; background-color: cyan; color: black; font-weight: bold;
+                     border: none; border-radius: 6px; cursor: not-allowed;">
+        Register
+      </button>
     </form>
 
-    <!-- Login link -->
     <p style="margin-top: 1rem; text-align: center;">
-      Already have an account? 
-      <button type="button" onclick="openLoginModal()" style="background:none; border:none; color:#1e3799; cursor:pointer; text-decoration: none; padding:0;">
+      Already have an account?
+      <button type="button" onclick="openLoginModal()" class="link-hover btn-link">
         Login
       </button>
     </p>
   </div>
 </div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% for category, _ in messages %}
-    {% if category.startswith("register_") %}
-      <script>
-        window.addEventListener("DOMContentLoaded", function () {
-          openModal("registerModal");
-        });
-      </script>
-    {% elif category.startswith("login_") %}
-      <script>
-        window.addEventListener("DOMContentLoaded", function () {
-          openModal("loginModal");
-        });
-      </script>
-    {% endif %}
-  {% endfor %}
-{% endwith %}
-
 <script>
-  // Open specific modal (flex display)
+  // ========== MODAL CONTROL ==========
   function openModal(id) {
     document.getElementById(id).style.display = 'flex';
   }
 
-  // Close specific modal
   function closeModal(id) {
     document.getElementById(id).style.display = 'none';
   }
 
-  // Open login modal and hide register modal
   function openLoginModal() {
     closeModal('registerModal');
     openModal('loginModal');
   }
 
-  // Open register modal and hide login modal
   function openRegisterModal() {
     closeModal('loginModal');
     openModal('registerModal');
   }
 
-  // Close modal when clicking outside modal content
-  window.onclick = function(event) {
+  window.onclick = function (event) {
     document.querySelectorAll('.modal').forEach(modal => {
       if (event.target === modal) {
         modal.style.display = 'none';
       }
     });
   };
+</script>
 
-  // Mobile nav toggle script
+<script>
+  // ========== MOBILE NAV TOGGLE ==========
   const menuToggle = document.getElementById('menuToggle');
   const navLinks = document.getElementById('navLinks');
 
@@ -603,8 +905,10 @@ footer {
       menuToggle.setAttribute('aria-expanded', !expanded);
     });
   }
+</script>
 
-  // Parallax scroll effect
+<script>
+  // ========== PARALLAX SCROLL ==========
   window.addEventListener("scroll", function () {
     const scrollTop = window.scrollY;
     const parallax = document.getElementById("parallax-bg");
@@ -614,5 +918,144 @@ footer {
   });
 </script>
 
+<script>
+  // ========== SECTION TOGGLE ==========
+  function showSection(id) {
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(section => section.classList.remove('active'));
+
+    const target = document.getElementById(id);
+    if (target) {
+      target.classList.add('active');
+      window.scrollTo(0, target.offsetTop - 50);
+    }
+  }
+
+  window.addEventListener('load', () => {
+    const hash = window.location.hash.substring(1);
+    if (hash) showSection(hash);
+  });
+</script>
+
+<!-- ========== AUTO-OPEN MODAL BASED ON FLASH ========== -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, _ in messages %}
+    {% if category.startswith("login_") %}
+      <script>
+        window.addEventListener("DOMContentLoaded", function () {
+          openModal("loginModal");
+        });
+      </script>
+    {% elif category.startswith("register_") %}
+      <script>
+        window.addEventListener("DOMContentLoaded", function () {
+          openModal("registerModal");
+        });
+      </script>
+    {% endif %}
+  {% endfor %}
+{% endwith %}
+
+<script>
+  // ========== OTP CONTROL + COOLDOWN ==========
+  let otpCooldownTime = 300; // seconds
+  let otpTimer;
+
+  function startOTPTimer() {
+    const msg = document.getElementById("otp-timer-msg");
+    msg.style.display = "block";
+
+    let seconds = otpCooldownTime;
+    otpTimer = setInterval(() => {
+      if (seconds <= 0) {
+        clearInterval(otpTimer);
+        msg.style.display = "none";
+        document.getElementById("otp-btn").disabled = false;
+        document.getElementById("otp-btn").style.opacity = 1;
+        return;
+      }
+
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      msg.innerText = `⏳ Please wait ${mins}:${secs.toString().padStart(2, '0')} before resending OTP...`;
+      seconds--;
+    }, 1000);
+  }
+
+  function sendRegisterOTP() {
+    const email = document.getElementById('email').value.trim();
+    if (!email) {
+      alert("⚠️ Please enter your email.");
+      return;
+    }
+
+    fetch("/send-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert("✅ OTP sent to your email.");
+        document.getElementById("otp-section").style.display = "block";
+        document.getElementById("otp-btn").disabled = true;
+        document.getElementById("otp-btn").style.opacity = 0.6;
+        startOTPTimer();
+      } else {
+        alert("❌ " + data.message);
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("❌ Error sending OTP.");
+    });
+  }
+
+  function verifyRegisterOTP() {
+    const otp = document.getElementById('otp').value.trim();
+    if (!otp) {
+      alert("Please enter the OTP.");
+      return;
+    }
+
+    fetch("/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ otp })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.verified) {
+        alert("✅ OTP Verified!");
+        document.getElementById("otp").style.backgroundColor = "#d1fae5";
+        const btn = document.getElementById("registerBtn");
+        btn.disabled = false;
+        btn.style.cursor = "pointer";
+        btn.style.backgroundColor = "#06b6d4";
+      } else {
+        alert("❌ " + (data.message || "Invalid OTP."));
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("❌ Verification failed.");
+    });
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const regBtn = document.getElementById("registerBtn");
+    if (regBtn) regBtn.disabled = true;
+  });
+</script>
+<script>
+  window.addEventListener("DOMContentLoaded", function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("open_login") === "true") {
+      const modal = document.getElementById("loginModal");
+      if (modal) modal.style.display = "flex";
+    }
+  });
+</script>
 </body>
 </html>

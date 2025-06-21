@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" x-data="productApp()">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -8,222 +8,154 @@
   <script src="https://unpkg.com/alpinejs" defer></script>
   <style>
     [x-cloak] { display: none !important; }
-    .cursor-pointer { cursor: pointer; }
+    .glass {
+      backdrop-filter: blur(16px);
+      background: rgba(15, 23, 42, 0.8);
+    }
   </style>
 </head>
-<body class="bg-gray-100 font-sans">
-  <div x-data="productApp()">
-    <div class="flex min-h-screen">
+<body class="h-screen bg-[#0f172a] text-cyan-100 overflow-hidden">
+
+  <div class="flex h-full">
+    <!-- Sidebar -->
+    <div class="fixed top-0 left-0 w-56 h-full z-40">
       {% set current_page = 'product' %}
       {% include 'sidebar.html' %}
+    </div>
 
-      <!-- Main Content -->
-      <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden relative">
+    <!-- Main Content Wrapper -->
+    <div class="flex flex-col ml-56 w-full h-full">
 
+      <!-- Sticky Tabs & Flash -->
+      <div class="sticky top-0 z-30 bg-[#0f172a] border-b border-cyan-700 pt-20">
         <!-- Tabs -->
-        <div class="flex space-x-4 border-b border-gray-200 mb-6">
-          <a 
-            href="/product"
-            class="px-4 py-2 text-sm border-b-2 font-semibold border-blue-600 text-blue-600"
-          >
-            Product
-          </a>
-          <a 
-            href="/services"
-            class="px-4 py-2 text-sm border-b-2 text-gray-600 hover:text-blue-600 hover:border-blue-400 border-transparent"
-          >
-            Services
-          </a>
+        <div class="flex space-x-4 px-4 py-2">
+          <a href="/product" class="text-sm font-semibold border-b-2 border-cyan-500 text-cyan-400">Product</a>
+          <a href="/services" class="text-sm border-b-2 border-transparent text-gray-400 hover:text-cyan-400 hover:border-cyan-400">Services</a>
         </div>
 
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
-            <div class="mb-4">
+            <div class="px-4 pb-3">
               {% for category, message in messages %}
-                <div class="p-3 rounded text-white 
-                            {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% else %}bg-blue-600{% endif %}">
+                <div class="p-3 rounded text-white mb-2
+                  {% if category == 'success' %}bg-green-600
+                  {% elif category == 'error' %}bg-red-600
+                  {% else %}bg-blue-600{% endif %}">
                   {{ message }}
                 </div>
               {% endfor %}
             </div>
           {% endif %}
         {% endwith %}
+      </div>
 
-        <!-- Product Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Scrollable Product Grid -->
+      <div class="flex-1 overflow-y-auto px-2 py-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
           {% for item in product_items %}
-          <div class="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-            <div class="w-full mb-3">
+          <div class="bg-[#1e293b] text-cyan-100 border border-cyan-700 rounded-lg shadow p-2 text-xs">
+            <div class="w-full mb-1">
               {% if item.images %}
-                <img 
-                  src="{{ url_for('static', filename='uploads/' ~ item.images[0]) }}" 
-                  alt="Product Image"
-                  class="w-full h-48 object-cover rounded"
-                />
+              <img src="{{ url_for('static', filename='uploads/' ~ item.images[0]) }}"
+                   alt="Product Image"
+                   class="w-full h-20 object-cover rounded" />
               {% endif %}
             </div>
-
-            <h2 class="text-lg font-semibold text-center mb-1">{{ item.name }}</h2>
-
-            <p class="text-gray-800 text-sm mb-2 text-center">
-              Price:
+            <h2 class="font-bold text-center truncate">{{ item.name }}</h2>
+            <p class="text-center my-1">
               {% if item.discount_price %}
-                <span class="line-through">₹{{ item.price }}</span>
-                <span class="text-green-700 font-bold ml-2">₹{{ item.discount_price }}</span>
+                <span class="line-through text-gray-400">₹{{ item.price }}</span>
+                <span class="text-green-400 font-bold ml-1">₹{{ item.discount_price }}</span>
               {% else %}
                 ₹{{ item.price }}
               {% endif %}
             </p>
-
-            <!-- Admin Actions -->
+            <!-- Actions -->
             <div class="flex space-x-2 mt-2 w-full">
               <form action="{{ url_for('delete_product', item_id=item.id) }}" method="POST" class="w-1/2">
                 <button type="submit"
                         onclick="return confirm('Are you sure you want to delete this item?')"
-                        class="w-full bg-red-600 hover:bg-red-700 text-white text-sm py-2 rounded">
-                  Delete
-                </button>
+                        class="w-full bg-red-600 hover:bg-red-700 text-white text-sm py-2 rounded">Delete</button>
               </form>
-
-              <button 
-                class="w-1/2 bg-gray-600 hover:bg-gray-700 text-white text-sm py-2 rounded"
-                @click.prevent='openEditModal({{ item | tojson }})'
-              >
-                Edit
-              </button>
+              <button @click.prevent='openEditModal({{ item | tojson }})'
+                      class="w-1/2 bg-cyan-700 hover:bg-cyan-800 text-white text-sm py-2 rounded">Edit</button>
             </div>
           </div>
           {% endfor %}
         </div>
-
-        <!-- Add New Product (Bottom Right Floating Button) -->
-        <button
-          @click="showAddModal = true"
-          class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-full shadow-lg"
-        >
-          + Add New Product
-        </button>
-
-      </main>
-    </div>
-
-    <!-- Add Product Modal -->
-    <div
-      x-show="showAddModal"
-      x-cloak
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    >
-      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
-        <button @click="showAddModal = false" class="absolute top-2 right-3 text-gray-500 hover:text-black text-xl">✖</button>
-        <h2 class="text-xl font-semibold mb-4 text-center">Add New Product</h2>
-
-        <form action="{{ url_for('product') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-          <div>
-            <label for="name" class="block font-medium text-gray-700">Product Name</label>
-            <input type="text" id="name" name="name" required class="w-full px-3 py-2 border rounded"/>
-          </div>
-
-          <div>
-            <label for="description" class="block font-medium text-gray-700">Description</label>
-            <textarea name="description" placeholder="Description" class="w-full mb-2 px-3 py-2 border rounded"></textarea>
-          </div>
-
-          <div>
-            <label for="price" class="block font-medium text-gray-700">Price</label>
-            <input type="number" id="price" name="price" step="1" required class="w-full px-3 py-2 border rounded"/>
-          </div>
-
-          <div>
-            <label for="discount_price" class="block font-medium text-gray-700">Discount Price</label>
-            <input type="number" id="discount_price" name="discount_price" step="1" class="w-full px-3 py-2 border rounded"/>
-          </div>
-
-          <div>
-            <label for="images" class="block font-medium text-gray-700">Upload Images (1–5)</label>
-            <input type="file" id="images" name="images" accept="image/*" multiple required class="w-full"/>
-          </div>
-
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
-            Upload Product
-          </button>
-        </form>
       </div>
+
+      <!-- Floating Add Button -->
+      <button @click="showAddModal = true"
+              class="fixed bottom-6 right-6 z-50 bg-cyan-600 hover:bg-cyan-700 text-white px-5 py-3 rounded-full shadow-lg">
+        + Add New Product
+      </button>
+
     </div>
+  </div>
 
-    <!-- Edit Product Modal -->
-    <div
-      x-show="showEditModal"
-      x-cloak
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    >
-      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
-        <button @click="showEditModal = false" class="absolute top-2 right-3 text-gray-500 hover:text-black text-xl">✖</button>
-        <h2 class="text-xl font-semibold mb-4 text-center">Edit Product Item</h2>
-
-        <form 
-          x-bind:action="`/edit_product/${editItem.id}`" 
-          method="POST" 
-          enctype="multipart/form-data"
-          class="space-y-4"
-        >
-          <div>
-            <label class="block font-medium text-gray-700">Product Name</label>
-            <input 
-              type="text" 
-              name="name" 
-              x-model="editItem.name" 
-              required 
-              class="w-full px-3 py-2 border rounded"
-            />
-          </div>
-          <div>
-            <label class="block font-medium text-gray-700">Description</label>
-            <textarea name="description" x-model="editItem.description" class="w-full px-3 py-2 border rounded"></textarea>
-          </div>
-          <div>
-            <label class="block font-medium text-gray-700">Price</label>
-            <input 
-              type="number" 
-              name="price" 
-              step="1" 
-              x-model.number="editItem.price" 
-              required 
-              class="w-full px-3 py-2 border rounded"
-            />
-          </div>
-          <div>
-            <label class="block font-medium text-gray-700">Discount Price</label>
-            <input 
-              type="number" 
-              name="discount_price" 
-              step="1" 
-              x-model.number="editItem.discount_price" 
-              class="w-full px-3 py-2 border rounded"
-            />
-          </div>
-
-          <div>
-            <label class="block font-medium text-gray-700">Update Images (1 to 5)</label>
-            <input 
-              type="file" 
-              name="images" 
-              accept="image/*" 
-              multiple 
-              class="w-full px-3 py-2 border rounded"
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
-          >
-            Update Product
-          </button>
-        </form>
-      </div>
+  <!-- Add Product Modal -->
+  <div x-show="showAddModal" x-cloak class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="glass border border-cyan-400 p-6 rounded-2xl shadow-2xl max-w-md w-full relative text-cyan-100">
+      <button @click="showAddModal = false" class="absolute top-2 right-3 text-cyan-400 hover:text-red-400 text-xl">✖</button>
+      <h2 class="text-2xl font-bold mb-4 text-center text-cyan-300">Add New Product</h2>
+      <form action="{{ url_for('product') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Product Name</label>
+          <input type="text" name="name" required class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Description</label>
+          <textarea name="description" placeholder="Description" class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Price</label>
+          <input type="number" name="price" step="1" required class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Discount Price</label>
+          <input type="number" name="discount_price" step="1" class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Upload Images (1–5)</label>
+          <input type="file" name="images" accept="image/*" multiple required class="w-full text-cyan-100" />
+        </div>
+        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded-lg shadow-lg">Upload Product</button>
+      </form>
     </div>
+  </div>
 
+  <!-- Edit Product Modal -->
+  <div x-show="showEditModal" x-cloak class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="glass border border-cyan-400 p-6 rounded-2xl shadow-2xl max-w-md w-full relative text-cyan-100">
+      <button @click="showEditModal = false" class="absolute top-2 right-3 text-cyan-400 hover:text-red-400 text-xl">✖</button>
+      <h2 class="text-2xl font-bold mb-4 text-center text-cyan-300">Edit Product</h2>
+      <form x-bind:action="`/edit_product/${editItem.id}`" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Product Name</label>
+          <input type="text" name="name" x-model="editItem.name" required class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Description</label>
+          <textarea name="description" x-model="editItem.description" class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Price</label>
+          <input type="number" name="price" step="1" x-model.number="editItem.price" required class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Discount Price</label>
+          <input type="number" name="discount_price" step="1" x-model.number="editItem.discount_price" class="w-full px-3 py-2 rounded-lg bg-[#0f172a] border border-cyan-500 text-cyan-100 placeholder-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-sm text-cyan-300 mb-1">Update Images (1–5)</label>
+          <input type="file" name="images" accept="image/*" multiple class="w-full text-cyan-100" />
+        </div>
+        <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded-lg shadow-lg">Update Product</button>
+      </form>
+    </div>
   </div>
 
   <script>

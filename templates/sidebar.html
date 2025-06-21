@@ -1,97 +1,92 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-100">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yash Cyber Cafe</title>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #000428, #004e92);
+      color: #e0f7fa;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 230, 255, 0.3);
+    }
+    .hover-glow:hover {
+      color: #00e6ff;
+      text-shadow: 0 0 5px #00e6ff, 0 0 10px #00e6ff;
+    }
+    .dropdown-box {
+      background: #012f4b;
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    }
+    .hover-red-glow:hover {
+      color: #ff4d4d;
+      text-shadow: 0 0 5px #ff4d4d, 0 0 10px #ff4d4d;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body class="h-full">
-
   <!-- TOPBAR -->
-  <header class="fixed top-0 left-0 w-full bg-[#0a3d62] text-white flex items-center justify-between px-4 py-3 z-50 md:px-6 shadow">
+  <header class="fixed top-0 left-0 w-full glass text-white flex items-center justify-between px-4 py-3 z-50 md:px-6">
     <div class="flex items-center space-x-3">
-      <!-- Hamburger Button (Mobile Only) -->
       <button
         x-data
         @click="$dispatch('toggle-sidebar')"
-        class="md:hidden flex flex-col space-y-1 focus:outline-none bg-gray-800 p-2 rounded"
-        aria-label="Toggle sidebar"
-      >
+        class="md:hidden flex flex-col space-y-1 focus:outline-none bg-gray-900 p-2 rounded"
+        aria-label="Toggle sidebar">
         <span class="block w-6 h-0.5 bg-white rounded"></span>
         <span class="block w-6 h-0.5 bg-white rounded"></span>
         <span class="block w-6 h-0.5 bg-white rounded"></span>
       </button>
-
-      <!-- Logo + Title -->
-      <img src="/static/images/admin.png" alt="Logo" class="w-12 h-12 rounded-full" />
+      <img src="/static/images/admin.png" alt="Logo" class="w-12 h-12 rounded-full border-2 border-cyan-300" />
       <div class="flex flex-col leading-tight">
-        <span class="text-lg font-bold">Yash Cyber Cafe</span>
-        <span class="text-xs text-gray-300">Your Digital Gateway</span>
+        <span class="text-lg font-bold text-cyan-300">Yash Cyber Cafe</span>
+        <span class="text-xs text-cyan-100">Your Digital Gateway</span>
       </div>
     </div>
 
-    <!-- Profile Dropdown Component -->
-    <div
-      class="relative"
-      x-data="{ openProfile: false }"
-      @keydown.escape.window="openProfile = false"
-    >
-      <!-- Profile Button -->
-      <button 
-        @click="openProfile = !openProfile" 
-        class="focus:outline-none rounded-full border border-gray-300 overflow-hidden"
-        aria-label="Toggle profile dropdown"
-      >
+    <div class="relative" x-data="{ openProfile: false }" @keydown.escape.window="openProfile = false">
+      <button @click="openProfile = !openProfile" class="focus:outline-none rounded-full overflow-hidden">
         <img
           src="{% if user.profile_image %}{{ url_for('static', filename='uploads/' + user.profile_image) }}{% elif user.gender_id == 2 %}{{ url_for('static', filename='images/default_female.png') }}{% else %}{{ url_for('static', filename='images/default_male.png') }}{% endif %}"
           alt="Profile"
-          class="w-10 h-10 object-cover rounded-full"
+          class="w-10 h-10 object-cover rounded-full border border-cyan-400"
         />
       </button>
 
-      <!-- Dropdown Menu -->
       <div
         x-show="openProfile"
         @click.away="openProfile = false"
         x-transition
         x-cloak
-        class="absolute mt-2 right-0 w-72 bg-white text-black rounded-xl shadow-lg p-4"
-        style="min-width: 18rem;"
-      >
-        <!-- User Info -->
+        class="absolute mt-2 right-0 w-72 dropdown-box text-white rounded-xl p-4">
         <div class="flex items-center space-x-3 mb-4">
           <img
             src="{% if user.profile_image %}{{ url_for('static', filename='uploads/' + user.profile_image) }}{% elif user.gender_id == 2 %}{{ url_for('static', filename='images/default_female.png') }}{% else %}{{ url_for('static', filename='images/default_male.png') }}{% endif %}"
             alt="Profile"
-            class="w-10 h-10 object-cover rounded-full border border-gray-300"
+            class="w-10 h-10 object-cover rounded-full border border-cyan-400"
           />
           <div>
-            <div class="font-semibold text-gray-900 leading-tight">{{ user.name }}</div>
-            <div class="text-sm text-gray-500 truncate max-w-[12rem]">{{ user.email }}</div>
+            <div class="font-semibold leading-tight text-cyan-300">{{ user.name }}</div>
+            <div class="text-sm text-cyan-100 truncate max-w-[12rem]">{{ user.email }}</div>
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="border-t border-gray-200 pt-2 flex justify-between space-x-2">
-          <a
-            href="/account"
-            class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded w-1/2 space-x-2"
-          >
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 016.343 16H9a4 4 0 004-4V8a4 4 0 00-4-4H6.343a4 4 0 00-1.222.196M15 12h6" />
-            </svg>
-            <span>Account</span>
+        <div class="border-t border-cyan-400 pt-2 flex justify-between space-x-2">
+          <a href="/account" class="flex items-center px-3 py-2 text-sm hover-glow rounded w-1/2 space-x-2">
+            <span>👤</span><span>Account</span>
           </a>
-          <a
-            href="/logout"
-            class="flex items-center justify-end px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded w-1/2 space-x-2"
-          >
-            <span>Sign out</span>
-            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 11-4 0v-1m0-8V7a2 2 0 114 0v1" />
-            </svg>
+          <a href="/logout" class="flex items-center justify-end px-3 py-2 text-sm text-red-400 hover-red-glow rounded w-1/2 space-x-2">
+            <span>Sign out</span><span>🚪</span>
           </a>
         </div>
       </div>
@@ -103,71 +98,28 @@
     x-data="{ sidebarOpen: window.innerWidth >= 768 }"
     x-on:toggle-sidebar.window="sidebarOpen = !sidebarOpen"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed top-0 left-0 z-40 w-56 text-white min-h-screen flex flex-col justify-between transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto pt-16"
-    style="background-color: #145fa8;"
-    aria-label="Sidebar"
-  >
+    class="fixed top-0 left-0 z-40 w-56 text-cyan-100 min-h-screen flex flex-col justify-between transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static pt-16 glass"
+    aria-label="Sidebar">
     <nav class="text-base">
       <ul class="space-y-3 p-4">
-        <li>
-          <a href="/home" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/home' else '' }}">
-            <span>🏠</span><span>Home</span>
-          </a>
-        </li>
+        <li><a href="/home" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/home' else '' }}">🏠<span>Home</span></a></li>
         {% if user.role in ['admin', 'owner'] %}
-        <li>
-          <a href="/orders" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/orders' else '' }}">
-            <span>📅</span><span>Orders</span>
-          </a>
-        </li>
-        <li>
-          <a href="/product" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path.startswith('/product') or request.path.startswith('/services') else '' }}">
-            <span>📚</span><span>Product</span>
-          </a>
-        </li>
-        <li>
-          <a href="/inbox" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/inbox' else '' }}">
-            <span>📬</span><span>Inbox</span>
-          </a>
-        </li>
-        <li>
-          <a href="/bill" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/bill' else '' }}">
-            <span>🧾</span><span>Bill</span>
-          </a>
-        </li>
+        <li><a href="/orders" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/orders' else '' }}">📅<span>Orders</span></a></li>
+        <li><a href="/product" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path.startswith('/product') or request.path.startswith('/services') else '' }}">📚<span>Product</span></a></li>
+        <li><a href="/inbox" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/inbox' else '' }}">📬<span>Inbox</span></a></li>
+        <li><a href="/bill" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/bill' else '' }}">🧾<span>Bill</span></a></li>
         {% endif %}
         {% if user.role == 'user' %}
-        <li>
-          <a href="/my_orders" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/my_orders' else '' }}">
-            <span>📅</span><span>My Orders</span>
-          </a>
-        </li>
-        <li>
-          <a href="/contact" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/contact' else '' }}">
-            <span>📬</span><span>Contact us</span>
-          </a>
-        </li>
+        <li><a href="/my_orders" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/my_orders' else '' }}">📅<span>My Orders</span></a></li>
+        <li><a href="/contact" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/contact' else '' }}">📬<span>Contact us</span></a></li>
         {% endif %}
         {% if user.role == 'owner' %}
-        <li>
-          <a href="/sales" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/sales' else '' }}">
-            <span>💰</span><span>Sales</span>
-          </a>
-        </li>
-        <li>
-          <a href="/create_admin" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/create_admin' else '' }}">
-            <span>👨‍💼</span><span>Admin</span>
-          </a>
-        </li>
+        <li><a href="/sales" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/sales' else '' }}">💰<span>Sales</span></a></li>
+        <li><a href="/create_admin" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/create_admin' else '' }}">👨‍💼<span>Admin</span></a></li>
         {% endif %}
-        <li>
-          <a href="/settings" class="flex items-center space-x-3 hover:text-blue-400 {{ 'text-blue-400 font-semibold' if request.path == '/settings' else '' }}">
-            <span>⚙️</span><span>Settings</span>
-          </a>
-        </li>
+        <li><a href="/settings" class="flex items-center space-x-3 hover-glow {{ 'text-cyan-300 font-semibold' if request.path == '/settings' else '' }}">⚙️<span>Settings</span></a></li>
       </ul>
     </nav>
   </aside>
-
 </body>
 </html>

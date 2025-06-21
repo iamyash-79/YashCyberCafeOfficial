@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forgot Password</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .form-box {
+      background: #1e1e2f;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 0 10px cyan;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 0.5rem 0 1rem;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #222;
+      color: #eee;
+    }
+    input[type="submit"], .tab-btn {
+      background-color: #00d1d1;
+      color: #000;
+      border: none;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .tab-btn.active {
+      background-color: #fff;
+      color: #000;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .flash {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      border-radius: 5px;
+    }
+    .flash-error { background: #7f1d1d; color: #fecaca; }
+    .flash-success { background: #14532d; color: #bbf7d0; }
+    .temp-box {
+      background: #333;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      color: #0ff;
+      box-shadow: 0 0 5px cyan;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-box">
+    <h2>🔐 Recover Password</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ 'flash-error' if category == 'error' else 'flash-success' }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('security-tab')">🔐 Via Security Question</button>
+      <button class="tab-btn" onclick="showTab('otp-tab')">📧 Via Email OTP</button>
+    </div>
+
+    <!-- Security Question Tab -->
+    <div class="tab-content active" id="security-tab">
+      <form method="POST" autocomplete="off" onsubmit="return validateSecurityForm()">
+        <label for="contact">Mobile Number (optional)</label>
+        <input type="text" id="contact" name="contact" placeholder="Your mobile number" />
+
+        <label for="email">Email Address (optional)</label>
+        <input type="email" id="email" name="email" placeholder="Your email" />
+
+        <label for="question">Security Question <span style="color:red">*</span></label>
+        <select id="question" name="question" required>
+          <option value="">-- Select a question --</option>
+          {% for q in questions %}
+            <option value="{{ q[1] }}">{{ q[1] }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="answer">Your Answer <span style="color:red">*</span></label>
+        <input type="text" id="answer" name="answer" required placeholder="Answer to security question" />
+
+        <input type="submit" value="Recover Password" />
+
+        <!-- 🔐 Back to Login -->
+        <div style="text-align: center; margin-top: 1rem;">
+          <button type="button"
+        data-href="{{ url_for('login_user') }}?open_login=true"
+        onclick="window.location.href=this.dataset.href"
+        style="background: none; border: none; color: #0ff; font-weight: bold; cursor: pointer;">
+  🔐 Back to Login
+</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- OTP Tab -->
+    <div class="tab-content" id="otp-tab">
+      <form method="POST" action="{{ url_for('recover_otp') }}" autocomplete="off" onsubmit="return validateOTPForm()">
+        <label>Email Address <span style="color:red">*</span></label>
+        <input type="email" id="otp_email" name="otp_email" placeholder="Enter your email" required />
+
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <input type="text" id="otp_code" name="otp_code" placeholder="Enter OTP" style="flex: 1;" required />
+          <button type="button" onclick="sendOTP()" style="padding: 8px 12px;">Send OTP</button>
+        </div>
+
+        <label>New Password</label>
+        <input type="password" name="new_password" placeholder="New Password" required />
+        <label>Confirm Password</label>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required />
+
+        <input type="submit" value="Reset Password" />
+
+        <!-- 🔐 Back to Login -->
+        <div style="text-align: center; margin-top: 1rem;">
+          <button type="button"
+        data-href="{{ url_for('login_user') }}?open_login=true"
+        onclick="window.location.href=this.dataset.href"
+        style="background: none; border: none; color: #0ff; font-weight: bold; cursor: pointer;">
+  🔐 Back to Login
+</button>
+        </div>
+      </form>
+    </div>
+
+    {% if temp_password %}
+      <div class="temp-box">
+        🔑 Your Temporary Password:<br>
+        <code>{{ temp_password }}</code>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(div => div.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+
+      const activeBtn = document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
+      if (activeBtn) activeBtn.classList.add("active");
+    }
+
+    function validateSecurityForm() {
+      const email = document.getElementById('email').value.trim();
+      const contact = document.getElementById('contact').value.trim();
+      if (!email && !contact) {
+        alert("Please fill at least Email or Mobile Number.");
+        return false;
+      }
+      return true;
+    }
+
+    function validateOTPForm() {
+      const email = document.getElementById('otp_email').value.trim();
+      const otp = document.getElementById('otp_code').value.trim();
+      if (!email || !otp) {
+        alert("Please fill in both Email and OTP.");
+        return false;
+      }
+      return true;
+    }
+
+    function sendOTP() {
+      const email = document.getElementById("otp_email").value.trim();
+      if (!email) {
+        alert("Please enter your email first.");
+        return;
+      }
+
+      fetch("/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("✅ OTP sent to your email.");
+        } else {
+          alert("❌ " + data.message);
+        }
+      })
+      .catch(err => {
+        console.error("OTP Error:", err);
+        alert("❌ Failed to send OTP.");
+      });
+    }
+  </script>
+</body>
+</html>

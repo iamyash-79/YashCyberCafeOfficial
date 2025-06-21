@@ -1,29 +1,70 @@
 <!DOCTYPE html>
-<html lang="en" x-data="myOrdersApp()">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>My Orders - {{ short_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/alpinejs" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      background: #0f172a;
+      color: #e0f7fa;
+    }
+
+    table th {
+      background-color: #13293d !important;
+      color: #00ffff;
+    }
+
+    table td {
+      background-color: #0f1a2b;
+      color: #e0f7fa;
+      border-color: #1f2937;
+    }
+
+    .btn-neon {
+      background-color: #00bcd4;
+      color: white;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px #00bcd4, 0 0 20px #00bcd4;
+    }
+
+    .btn-neon:hover {
+      background-color: #0288d1;
+      box-shadow: 0 0 20px #0288d1, 0 0 30px #0288d1;
+    }
+
+    .status-badge {
+      border-radius: 9999px;
+      padding: 0.25rem 0.75rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .status-pending { background-color: #ffb300; color: black; }
+    .status-accepted { background-color: #4caf50; color: white; }
+    .status-cancelled { background-color: #f44336; color: white; }
+    .status-delivered { background-color: #2196f3; color: white; }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col md:flex-row"> <!-- lighter bg for whole page -->
-  {% include 'sidebar.html' %}
+<body class="min-h-screen bg-[#0f172a] text-cyan-100">
+  <div class="flex">
+    <!-- Fixed Sidebar -->
+    <div class="fixed top-0 left-0 w-56 h-full z-40">
+      {% include 'sidebar.html' %}
+    </div>
 
-  <!-- Hidden UPI link -->
-  <a id="upi-link" href="upi://pay?pa=syashwant682-7@oksbi&pn=Yashwant%20Sahu&am=50.00&cu=INR&aid=uGICAgKDp0aHBGg" class="hidden">Pay Now</a>
-
-  <main class="flex-1 p-4 sm:p-6 bg-white rounded-lg shadow-md"> <!-- white bg with shadow to match header/sidebar -->
-    <h1 class="text-2xl sm:text-3xl font-bold mb-6 mt-16">My Orders</h1>
- <!-- Added mt-6 and mb-8 for spacing -->
-
+    <!-- Main content shifted appropriately -->
+    <main class="ml-56 w-full px-4 sm:px-6 py-4 pt-5 overflow-x-auto">
+    <h1 class="text-3xl font-bold mb-6 mt-16 text-cyan-400">My Orders</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="mb-4">
           {% for category, message in messages %}
             <div class="p-3 rounded text-white 
-              {% if category == 'success' %}bg-green-600{% elif category == 'error' %}bg-red-600{% else %}bg-blue-600{% endif %}">
+              {% if category == 'success' %}bg-green-800{% elif category == 'error' %}bg-red-800{% else %}bg-blue-800{% endif %}">
               {{ message }}
             </div>
           {% endfor %}
@@ -31,279 +72,108 @@
       {% endif %}
     {% endwith %}
 
-    <div x-data="ordersApp()" class="overflow-x-auto bg-white rounded-lg shadow p-4">
-      <table class="min-w-full text-sm sm:text-base text-center table-auto">
-        <thead class="border-b bg-gray-100">
+   <div x-data="myOrdersApp()" class="rounded-lg shadow p-4">
+  <div class="overflow-x-auto">
+    <div class="relative">
+      <!-- Table Head -->
+      <table class="min-w-full text-sm sm:text-base text-center table-fixed border">
+        <thead class="bg-gray-900 sticky top-0 z-10">
           <tr>
-            <th class="p-2 whitespace-nowrap">S.No.</th>
-            <th class="p-2 whitespace-nowrap">Item</th>
-            <th class="p-2 whitespace-nowrap">Quantity</th>
-            <th class="p-2 whitespace-nowrap">Amount</th>
-            <th class="p-2 whitespace-nowrap">Status</th>
-            <th class="p-2 whitespace-nowrap" style="min-width: 300px;">Address</th>
-            <th class="p-2 whitespace-nowrap">Order Date<br>& Time</th>
-            <th class="p-2 whitespace-nowrap">Actions</th>
+            <th class="p-2">S.No.</th>
+            <th class="p-2">Item</th>
+            <th class="p-2">Qty</th>
+            <th class="p-2">Amount</th>
+            <th class="p-2">Status</th>
+            <th class="p-2">Address</th>
+            <th class="p-2">Order Date & Time</th>
+            <th class="p-2">Actions</th>
           </tr>
         </thead>
-        <tbody>
-          {% for order in my_orders %}
-          <tr class="border-b hover:bg-gray-50 text-center">
-            <td class="p-2">{{ loop.index }}</td>
-            <td class="p-2">{{ order.item_name }}</td>
-            <td class="p-2">{{ order.quantity }}</td>
-            <td class="p-2">₹{{ order.amount }}</td>
-            <td class="p-2 capitalize">
-              <span class="{% if order.status == 'pending' %}text-yellow-600
-                            {% elif order.status == 'accepted' %}text-green-600
-                            {% elif order.status == 'cancelled' %}text-red-600
-                            {% elif order.status == 'delivered' %}text-blue-600
-                            {% else %}text-gray-600{% endif %}">
-                {{ order.status }}
-              </span>
-            </td>
-            <td x-data="{ expanded: false }" class="p-2 max-w-[300px] text-sm sm:text-base text-left">
-              <template x-if="expanded">
-                <span>
-                  {{ order.address1 }}{% if order.address2 %}, {{ order.address2 }}{% endif %}, {{ order.city }}, {{ order.pincode }}
-                </span>
-              </template>
-              <template x-if="!expanded">
-                <span>
-                  {{ order.address1 | truncate(40, False, '') }}
-                  <span @click="expanded = true" class="text-blue-600 cursor-pointer hover:underline">...</span>
-                </span>
-              </template>
-            </td>
-            <td class="p-2">
-              {% set dt = order.order_date.split(' ') %}
-              <div>{{ dt[0] }}</div>
-              <div>{{ dt[1] if dt|length > 1 else '' }}</div>
-            </td>
-            <td class="p-2">
-              <div class="flex flex-col items-center space-y-2">
-                {% if order.status == 'pending' %}
-                  <button @click="handlePayment({{ order.id }})" class="text-blue-600 hover:underline">Pay Now</button>
-                  <form 
-                    method="POST" 
-                    action="{{ url_for('cancel_order', order_id=order.id) }}" 
-                    @submit.prevent="openCancelModal($event)">
-                    <button type="submit" class="text-red-600 hover:underline">Cancel</button>
-                  </form>
-                {% elif order.status == 'accepted' %}
-                  {% if order.is_paid %}
-                    <button 
-                      @click="openReceipt({{ order.id }}, '{{ user.name }}', '{{ order.amount }}', '{{ order.order_date }}')"
-                      class="text-green-600 hover:underline font-semibold">
-                      Paid
-                    </button>
-                  {% else %}
-                    <button @click="handlePayment({{ order.id }})" class="text-red-500 hover:underline cursor-pointer">
-                      Pay Now
-                    </button>
-                  {% endif %}
-                {% elif order.status == 'delivered' %}
-                  <span class="text-blue-600 font-semibold">Delivered ✅</span>
-                {% else %}
-                  <span class="text-gray-400">No actions</span>
-                {% endif %}
-              </div>
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="8" class="text-center p-4 text-gray-500">No orders found.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
       </table>
 
-      <!-- Cancel Confirmation Modal -->
-      <div
-        x-show="showCancelModal"
-        x-cloak
-        @keydown.escape.window="closeCancelModal()"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      >
-        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4 text-center">
-          <h2 class="text-lg font-semibold mb-4">Confirm Cancellation</h2>
-          <p class="mb-6">
-            Are you sure you want to cancel this order?
-            <span class="font-bold text-red-600">This action cannot be undone.</span>
-          </p>
-          <div class="flex justify-center space-x-4">
-            <button
-              @click="closeCancelModal()"
-              class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            >
-              No, Keep Order
-            </button>
-            <button
-              @click="submitCancelForm()"
-              class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Yes, Cancel Order
-            </button>
-          </div>
+      <!-- Scrollable Table Body -->
+      <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
+        <table class="min-w-full text-sm sm:text-base text-center table-fixed border">
+          <tbody>
+            {% for order in my_orders %}
+            <tr class="border-b hover:bg-gray-800">
+              <td class="p-2">{{ loop.index }}</td>
+              <td class="p-2">{{ order.item_name }}</td>
+              <td class="p-2">{{ order.quantity }}</td>
+              <td class="p-2">₹{{ order.amount }}</td>
+              <td class="p-2">
+                <span class="status-badge 
+                  {% if order.status == 'pending' %}status-pending
+                  {% elif order.status == 'accepted' %}status-accepted
+                  {% elif order.status == 'cancelled' %}status-cancelled
+                  {% elif order.status == 'delivered' %}status-delivered
+                  {% endif %}">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td class="p-2 text-left">
+                {{ order.address1 }}, {{ order.address2 }}, {{ order.city }}, {{ order.pincode }}
+              </td>
+              <td class="p-2">
+                {% set dt = order.order_date.split(' ') %}
+                <div>{{ dt[0] }}</div>
+                <div>{{ dt[1] if dt|length > 1 else '' }}</div>
+              </td>
+              <td class="p-2">
+                <div class="flex flex-col items-center space-y-2">
+                  {% if order.status == 'pending' %}
+                    <button @click="handlePayment({{ order.id }})" class="btn-neon text-sm px-3 py-1 rounded">Pay</button>
+                    <form method="POST" action="{{ url_for('cancel_order', order_id=order.id) }}">
+                      <button type="submit" class="text-red-400 text-xs hover:underline">Cancel</button>
+                    </form>
+                  {% elif order.status == 'accepted' %}
+                    <button class="btn-neon text-xs px-2 py-1">Accepted</button>
+                  {% elif order.status == 'delivered' %}
+                    <span class="text-blue-400 text-xs">Delivered ✅</span>
+                  {% else %}
+                    <span class="text-gray-400 text-xs">N/A</span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-gray-400 p-4">No orders found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+      <!-- Desktop QR Code Modal -->
+      <div x-show="showQR" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50" x-cloak>
+        <div class="bg-gray-900 p-6 rounded-lg text-center shadow-lg">
+          <h2 class="text-xl font-bold mb-2 text-cyan-400">Scan to Pay</h2>
+          <img :src="qrImage" alt="UPI QR Code" class="w-64 mx-auto rounded border border-cyan-400 mb-4" />
+          <button @click="showQR = false" class="btn-neon px-4 py-2 rounded mt-2">Close</button>
         </div>
       </div>
     </div>
-
-    <!-- QR Code Popup -->
-    <div x-show="showQR" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50" x-cloak>
-      <div class="bg-white p-4 rounded-lg shadow-md w-80">
-        <h2 class="text-xl font-bold mb-2">Scan to Pay</h2>
-        <img :src="qrImage" alt="UPI QR Code" class="w-full rounded mb-4" />
-        <button @click="showQR = false" class="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700">Close</button>
-      </div>
-    </div>
-
-    <!-- Receipt Popup -->
-    <div x-show="showReceipt" x-cloak class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg w-full max-w-2xl shadow-lg">
-        <h2 class="text-2xl font-bold mb-2 text-center">Yash Cyber Cafe</h2>
-        <p class="text-sm text-center">Gedra Gattasilli, Dhamtari - 493778</p>
-        <p class="text-sm text-center mb-6">Phone: 7987190554</p>
-
-        <div class="mb-4">
-          <p><strong>Invoice No.:</strong> <span x-text="receipt.orderId"></span></p>
-          <p><strong>Invoice Date & Time:</strong> <span x-text="receipt.date"></span></p>
-        </div>
-
-        <div class="mb-4">
-          <p><strong>Bill and Ship To:</strong></p>
-          <p x-text="receipt.customerName"></p>
-          <p>Phone: <span x-text="receipt.phone"></span></p>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full border text-sm text-left">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="border px-2 py-1">#</th>
-                <th class="border px-2 py-1">Item</th>
-                <th class="border px-2 py-1">Price</th>
-                <th class="border px-2 py-1">Discount</th>
-                <th class="border px-2 py-1">Qty</th>
-                <th class="border px-2 py-1">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="(item, index) in receipt.items" :key="index">
-                <tr>
-                  <td class="border px-2 py-1" x-text="index + 1"></td>
-                  <td class="border px-2 py-1" x-text="item.productName"></td>
-                  <td class="border px-2 py-1">
-                    <span 
-                      :class="item.discountedPrice < item.price ? 'line-through text-red-500' : ''"
-                      x-text="'₹' + item.price">
-                    </span>
-                  </td>
-                  <td class="border px-2 py-1">
-                    <span x-text="item.discountedPrice < item.price ? '₹' + item.discountedPrice : '₹0'"></span>
-                  </td>
-                  <td class="border px-2 py-1" x-text="item.quantity"></td>
-                  <td class="border px-2 py-1" 
-                      x-text="'₹' + (item.discountedPrice < item.price ? item.discountedPrice * item.quantity : item.price * item.quantity)">
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="mt-4 text-right">
-          <p><strong>Total Amount:</strong> ₹<span x-text="receipt.amount"></span></p>
-        </div>
-
-        <p class="text-center text-xs mt-2 italic">~ THIS IS A DIGITALLY CREATED INVOICE ~</p>
-
-        <div class="mt-6 flex justify-end">
-          <button @click="showReceipt = false" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+  </main>
 
   <script>
-  const ALL_ORDERS = JSON.parse(`{{ my_orders | tojson | safe }}`);
-</script>
+    const ALL_ORDERS = JSON.parse(`{{ my_orders | tojson | safe }}`);
 
-
-<script>
-  function myOrdersApp() {
-    return {
-      showQR: false,
-      showReceipt: false,
-      qrImage: '',
-      receipt: {
-        orderId: '',
-        customerName: '',
-        phone: '',
-        amount: '',
-        date: '',
-        items: [],
-        amountInWords: ''
-      },
-      showCancelModal: false,
-      cancelForm: null,
-
-      handlePayment(orderId) {
-  const order = ALL_ORDERS.find(o => o.id === orderId);
-  const amount = order ? order.amount : 0;
-  const upiUrl = `upi://pay?pa=syashwant682-7@oksbi&pn=Yashwant%20Sahu&am=${amount}&cu=INR&aid=uGICAgKDp0aHBGg`;
-  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-  const qrImageUrl = "/static/images/qr.jpg";
-
-  if (isMobile) {
-    window.location.href = upiUrl;
-  } else {
-    this.qrImage = qrImageUrl;
-    this.showQR = true;
-  }
-},
-
-      openReceipt(id, name, amount, date, phone = '', items = []) {
-        this.receipt = {
-          orderId: id,
-          customerName: name,
-          amount,
-          date,
-          phone,
-          items,
-          amountInWords: this.convertToWords(amount)
-        };
-        this.showReceipt = true;
-      },
-
-      openCancelModal(event) {
-        this.cancelForm = event.target;
-        this.showCancelModal = true;
-      },
-
-      closeCancelModal() {
-        this.showCancelModal = false;
-        this.cancelForm = null;
-      },
-
-      submitCancelForm() {
-        if (this.cancelForm) {
-          this.cancelForm.submit();
+    function myOrdersApp() {
+      return {
+        showQR: false,
+        qrImage: '',
+        handlePayment(orderId) {
+          const order = ALL_ORDERS.find(o => o.id === orderId);
+          const amount = order ? order.amount : 0;
+          const upiUrl = `upi://pay?pa=syashwant682-7@oksbi&pn=Yashwant%20Sahu&am=${amount}&cu=INR&aid=uGICAgKDp0aHBGg`;
+          const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+          if (isMobile) {
+            window.location.href = upiUrl;
+          } else {
+            this.qrImage = "/static/images/qr.jpg";
+            this.showQR = true;
+          }
         }
-      },
-
-      convertToWords(amount) {
-        // Simplified conversion for demonstration
-        const words = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
-        if(amount < 20) return words[amount];
-        return amount.toString(); // fallback
       }
     }
-  }
-
-  function ordersApp() {
-    return {};
-  }
-</script>
+  </script>
 </body>
 </html>

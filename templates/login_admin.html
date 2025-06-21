@@ -3,69 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Login</title>
+  <title>Admin Login - Yash Cyber Cafe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet" />
   <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      color: #fff;
     }
+
     .login-box {
-      background: #fff;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
       padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-      width: 300px;
+      width: 320px;
+      box-shadow: 0 0 25px rgba(30, 55, 153, 0.5);
     }
+
     .login-box h2 {
       text-align: center;
-      margin-bottom: 1rem;
-      color: #1e3799;
+      color: #1e90ff;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
     }
+
     input[type="email"],
     input[type="password"] {
       width: 100%;
-      padding: 0.6rem;
-      margin: 0.5rem 0;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      background: transparent;
+      border: 2px solid #1e90ff;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.3s ease;
     }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: #00f2ff;
+    }
+
     input[type="submit"] {
       width: 100%;
-      background-color: #1e3799;
+      padding: 0.75rem;
+      background: #1e90ff;
       color: #fff;
-      padding: 0.6rem;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
+      font-weight: 600;
       cursor: pointer;
+      transition: background 0.3s ease;
     }
+
     input[type="submit"]:hover {
-      background-color: #0c2461;
+      background: #00f2ff;
+      color: #000;
     }
+
     .flash {
-      padding: 0.6rem;
+      padding: 0.75rem;
+      border-radius: 8px;
       margin-bottom: 1rem;
-      border-radius: 4px;
+      font-weight: 500;
+      text-align: center;
     }
+
     .flash-error {
-      background-color: #ffe6e6;
-      color: #cc0000;
+      background-color: rgba(255, 0, 0, 0.1);
+      color: #ff4d4d;
+      border: 1px solid #ff4d4d;
     }
+
     .flash-success {
-      background-color: #e6ffe6;
-      color: #006600;
+      background-color: rgba(0, 255, 0, 0.1);
+      color: #00ff99;
+      border: 1px solid #00ff99;
     }
+
     .switch-link {
       text-align: center;
       margin-top: 1rem;
     }
+
     .switch-link a {
-      color: #1e3799;
-      text-decoration: underline;
+      color: #00f2ff;
+      text-decoration: none;
       font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .switch-link a:hover {
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @media (max-width: 400px) {
+      .login-box {
+        width: 90%;
+        padding: 1.5rem;
+      }
     }
   </style>
 </head>

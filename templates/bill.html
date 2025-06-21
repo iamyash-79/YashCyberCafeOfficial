@@ -6,149 +6,214 @@
   <title>Bill - {{ short_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/alpinejs" defer></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #000428, #004e92);
+      color: #e0f7fa;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 230, 255, 0.3);
+    }
+    .neon-hover:hover {
+      color: #00e6ff;
+      text-shadow: 0 0 5px #00e6ff, 0 0 10px #00e6ff;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col md:flex-row">
-
-  {% include 'sidebar.html' %}
-
-  <main class="flex-1 p-4 pt-20 md:pl-38 overflow-hidden">
-
-    <!-- Bill Table -->
-    <div class="overflow-x-auto bg-white rounded-lg shadow p-4">
-      <table class="min-w-full text-sm text-left text-gray-700">
-        <thead class="bg-gray-100 text-xs uppercase">
-          <tr>
-            <th class="px-4 py-2">S.No.</th>
-            <th class="px-4 py-2">Name</th>
-            <th class="px-4 py-2">Contact</th>
-            <th class="px-4 py-2">Amount</th>
-            <th class="px-4 py-2">Address</th>
-            <th class="px-4 py-2">Date & Time</th>
-            <th class="px-4 py-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for bill in bills %}
-          <tr class="border-b hover:bg-gray-50">
-            <td class="px-4 py-2">{{ loop.index }}</td>
-            <td class="px-4 py-2">{{ bill.name }}</td>
-            <td class="px-4 py-2">{{ bill.contact }}</td>
-            <td class="px-4 py-2 font-semibold text-green-600">₹{{ bill.total }}</td>
-            <td class="px-4 py-2">{{ bill.address }}</td>
-            <td class="px-4 py-2">{{ bill.date }}</td>
-            <td class="px-4 py-2 flex gap-2">
-              <!-- ✅ Replaced button with link -->
-              <a href="/bill/print/{{ bill.id }}" target="_blank"
-                 class="text-blue-600 hover:underline text-sm">🖨️</a>
-
-              <form method="POST" action="/bill/delete/{{ bill.id }}" onsubmit="return confirm('Delete this bill?')">
-                <button class="text-red-500 hover:underline text-sm">🗑️</button>
-              </form>
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="7" class="text-center py-4 text-gray-400">No bills available.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<body class="min-h-screen bg-[#0f172a] text-cyan-100">
+  <div class="flex">
+    <!-- Fixed Sidebar -->
+    <div class="fixed top-0 left-0 w-56 h-full z-40">
+      {% include 'sidebar.html' %}
     </div>
+
+    <!-- Main content shifted appropriately -->
+    <main class="ml-56 w-full px-4 sm:px-6 py-4 pt-20 overflow-x-auto">
+
+   <!-- Bill Table -->
+<div class="glass rounded-xl text-white border border-cyan-500">
+  <!-- Table Head (Sticky) -->
+  <div class="overflow-hidden">
+    <table class="min-w-full text-sm text-left">
+      <thead class="text-cyan-300 text-xs uppercase border-b border-cyan-500 bg-[#0f172a] sticky top-0 z-10">
+        <tr>
+          <th class="px-4 py-2">S.No.</th>
+          <th class="px-4 py-2">Name</th>
+          <th class="px-4 py-2">Contact</th>
+          <th class="px-4 py-2">Amount</th>
+          <th class="px-4 py-2">Address</th>
+          <th class="px-4 py-2">Date & Time</th>
+          <th class="px-4 py-2">Action</th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+
+  <!-- Table Body (Scrollable) -->
+  <div class="overflow-y-auto max-h-[82vh]">
+    <table class="min-w-full text-sm text-left">
+      <tbody>
+        {% for bill in bills %}
+        <tr class="border-b border-cyan-800 hover:bg-cyan-900/20 transition">
+          <td class="px-4 py-2">{{ loop.index }}</td>
+          <td class="px-4 py-2">{{ bill.name }}</td>
+          <td class="px-4 py-2">{{ bill.contact }}</td>
+          <td class="px-4 py-2 font-semibold text-green-400">₹{{ bill.total }}</td>
+          <td class="px-4 py-2">{{ bill.address }}</td>
+          <td class="px-4 py-2">{{ bill.date }}</td>
+          <td class="px-4 py-2 flex gap-2">
+            <a href="/bill/print/{{ bill.id }}" target="_blank"
+               class="text-cyan-300 neon-hover text-sm">🖨️</a>
+            <form method="POST" action="/bill/delete/{{ bill.id }}" onsubmit="return confirm('Delete this bill?')">
+              <button class="text-red-400 hover:underline text-sm">🗑️</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-cyan-100/50">No bills available.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
     <!-- Floating Add Bill Button -->
     <button @click="showForm = true"
-      class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white text-lg px-4 py-2 rounded-full shadow-lg">
+      class="fixed bottom-6 right-6 bg-cyan-600 hover:bg-cyan-400 text-white text-lg px-5 py-3 rounded-full shadow-lg transition duration-300">
       ➕ Add Bill
     </button>
 
     <!-- Add Bill Modal -->
-    <div x-show="showForm" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <form method="POST" @submit="calculateTotal" class="bg-white p-6 rounded-xl w-full max-w-3xl shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
-        <h2 class="text-xl font-bold">Add New Bill</h2>
+    <div x-show="showForm" x-cloak class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+      <form method="POST" @submit="calculateTotal" class="glass text-white p-6 rounded-xl w-full max-w-3xl shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <h2 class="text-2xl font-bold text-cyan-300">Add New Bill</h2>
 
         <!-- Basic Info -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <input name="name" type="text" placeholder="Name *" required class="border rounded p-2 w-full">
-          <input name="contact" type="text" placeholder="Contact No. *" required class="border rounded p-2 w-full">
-          <input name="address1" type="text" placeholder="Address Line 1" class="border rounded p-2 w-full">
-          <input name="address2" type="text" placeholder="Address Line 2" class="border rounded p-2 w-full">
-          <input name="city" type="text" placeholder="City" class="border rounded p-2 w-full">
-          <input name="pincode" type="text" placeholder="Pincode" class="border rounded p-2 w-full">
+          <input name="name" type="text" placeholder="Name *" required class="bg-transparent border border-cyan-400 rounded p-2 w-full">
+          <input name="contact" type="text" placeholder="Contact No. *" required class="bg-transparent border border-cyan-400 rounded p-2 w-full">
+          <input name="address1" type="text" placeholder="Address Line 1" class="bg-transparent border border-cyan-400 rounded p-2 w-full">
+          <input name="address2" type="text" placeholder="Address Line 2" class="bg-transparent border border-cyan-400 rounded p-2 w-full">
+          <input name="city" type="text" placeholder="City" class="bg-transparent border border-cyan-400 rounded p-2 w-full">
+          <input name="pincode" type="text" placeholder="Pincode" class="bg-transparent border border-cyan-400 rounded p-2 w-full">
         </div>
 
         <!-- Products -->
-        <div class="space-y-2">
-          <label class="block font-semibold">Products</label>
-          <template x-for="(product, i) in products" :key="i">
-            <div class="flex items-center gap-2">
-              <select :name="`product_name_${i}`" class="border p-2 rounded w-full" @change="updateTotal">
-                <option value="">-- Select Product --</option>
-                {% for p in products %}
-                  <option value="{{ p.name }}" :data-price="{{ p.discount_price or p.price }}">{{ p.name }}</option>
-                {% endfor %}
-              </select>
-              <input :name="`product_qty_${i}`" type="number" min="1" value="1" class="w-20 border rounded p-1" @input="updateTotal">
-              <button type="button" @click="products.splice(i, 1)" class="text-red-500 text-sm">✖</button>
-            </div>
-          </template>
-          <button type="button" @click="products.push({})" class="text-blue-600 text-sm mt-1">+ Add Product</button>
-        </div>
+<div class="space-y-2">
+  <label class="block text-lg font-bold text-cyan-300 tracking-wide uppercase">🛒 Products</label>
+  <template x-for="(product, i) in products" :key="i">
+    <div class="flex items-center gap-2">
+      <select 
+        :name="`product_name_${i}`"
+        class="bg-gray-800 text-white border border-cyan-400 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        @change="updateTotal">
+        <option value="">-- Select Product --</option>
+        {% for p in products %}
+        <option value="{{ p.name }}" :data-price="{{ p.discount_price or p.price }}">{{ p.name }}</option>
+        {% endfor %}
+      </select>
+      <input 
+        :name="`product_qty_${i}`" 
+        type="number" 
+        min="1" 
+        value="1"
+        class="w-20 bg-gray-800 text-white border border-cyan-400 rounded p-1"
+        @input="updateTotal">
+      <button 
+        type="button" 
+        @click="products.splice(i, 1)" 
+        class="text-red-400 text-sm">
+        ✖
+      </button>
+    </div>
+  </template>
+  <button 
+    type="button" 
+    @click="products.push({})" 
+    class="text-cyan-400 text-sm mt-1 neon-hover">
+    + Add Product
+  </button>
+</div>
 
-        <!-- Services -->
-        <div class="space-y-2">
-          <label class="block font-semibold">Services</label>
-          <template x-for="(service, i) in services" :key="i">
-            <div class="flex items-center gap-2">
-              <select :name="`service_name_${i}`" class="border p-2 rounded w-full" @change="updateTotal">
-                <option value="">-- Select Service --</option>
-                {% for s in services %}
-                  <option value="{{ s.name }}" :data-price="{{ s.discount_price or s.price }}">{{ s.name }}</option>
-                {% endfor %}
-              </select>
-              <input :name="`service_qty_${i}`" type="number" min="1" value="1" class="w-20 border rounded p-1" @input="updateTotal">
-              <button type="button" @click="services.splice(i, 1)" class="text-red-500 text-sm">✖</button>
-            </div>
-          </template>
-          <button type="button" @click="services.push({})" class="text-blue-600 text-sm mt-1">+ Add Service</button>
-        </div>
+<!-- Services -->
+<div class="space-y-2">
+  <label class="block text-lg font-bold text-cyan-300 tracking-wide uppercase">🛠️ Services</label>
+  <template x-for="(service, i) in services" :key="i">
+    <div class="flex items-center gap-2">
+      <select 
+        :name="`service_name_${i}`"
+        class="bg-gray-800 text-white border border-cyan-400 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        @change="updateTotal">
+        <option value="">-- Select Service --</option>
+        {% for s in services %}
+        <option value="{{ s.name }}" :data-price="{{ s.discount_price or s.price }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+      <input 
+        :name="`service_qty_${i}`" 
+        type="number" 
+        min="1" 
+        value="1"
+        class="w-20 bg-gray-800 text-white border border-cyan-400 rounded p-1"
+        @input="updateTotal">
+      <button 
+        type="button" 
+        @click="services.splice(i, 1)" 
+        class="text-red-400 text-sm">
+        ✖
+      </button>
+    </div>
+  </template>
+  <button 
+    type="button" 
+    @click="services.push({})" 
+    class="text-cyan-400 text-sm mt-1 neon-hover">
+    + Add Service
+  </button>
+</div>
 
         <!-- Total -->
-        <input name="total" x-model="total" type="number" step="0.01" readonly placeholder="Total ₹" required class="border rounded p-2 w-full bg-gray-100">
+        <input name="total" x-model="total" type="number" step="0.01" readonly
+               class="border border-cyan-500 bg-cyan-900/40 rounded p-2 w-full text-white text-xl font-semibold" placeholder="Total ₹" required>
 
         <!-- Buttons -->
-        <div class="flex justify-end gap-2 pt-4">
-          <button type="button" @click="showForm = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save Bill</button>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" @click="showForm = false" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-400 rounded text-white font-bold">💾 Save Bill</button>
         </div>
       </form>
     </div>
-
   </main>
 
   <!-- Alpine Script -->
   <script>
-    function billApp() {
-      return {
-        showForm: false,
-        products: [{}],
-        services: [{}],
-        total: 0,
-        updateTotal() {
-          let total = 0;
-          document.querySelectorAll("select[name^='product_name_']").forEach((sel, i) => {
-            const qty = parseInt(document.querySelector(`input[name='product_qty_${i}']`)?.value || 1);
-            const price = parseFloat(sel.selectedOptions[0]?.getAttribute("data-price") || 0);
-            total += qty * price;
-          });
-          document.querySelectorAll("select[name^='service_name_']").forEach((sel, i) => {
-            const qty = parseInt(document.querySelector(`input[name='service_qty_${i}']`)?.value || 1);
-            const price = parseFloat(sel.selectedOptions[0]?.getAttribute("data-price") || 0);
-            total += qty * price;
-          });
-          this.total = total.toFixed(2);
-        }
+  function billApp() {
+    return {
+      showForm: false,
+      products: [{}],
+      services: [{}],
+      total: 0,
+      updateTotal() {
+        let total = 0;
+        document.querySelectorAll("select[name^='product_name_']").forEach((sel, i) => {
+          const qty = parseInt(document.querySelector(`input[name='product_qty_${i}']`)?.value || 1);
+          const price = parseFloat(sel.selectedOptions[0]?.getAttribute("data-price") || 0);
+          total += qty * price;
+        });
+        document.querySelectorAll("select[name^='service_name_']").forEach((sel, i) => {
+          const qty = parseInt(document.querySelector(`input[name='service_qty_${i}']`)?.value || 1);
+          const price = parseFloat(sel.selectedOptions[0]?.getAttribute("data-price") || 0);
+          total += qty * price;
+        });
+        this.total = total.toFixed(2);
       }
     }
-  </script>
+  }
+</script>
 </body>
 </html>

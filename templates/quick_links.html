@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quick Links - Yash Cyber Cafe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 25px rgba(0, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .section {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      color: #00f2ff;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #00f2ff33;
+      padding-bottom: 0.4rem;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #e0f7fa;
+      margin-bottom: 1.2rem;
+      line-height: 1.6;
+    }
+
+    strong {
+      color: #1de9b6;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.4rem;
+      }
+
+      p {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="track" class="section active">
+      <h2>📦 Track Order</h2>
+      <p>To track your order, please contact us with your order ID or visit our support desk. We'll help you check the status instantly.</p>
+    </div>
+
+    <div id="terms" class="section">
+      <h2>📜 Terms & Conditions</h2>
+      <p>By using <strong>Yash Cyber Cafe's</strong> services, you agree to follow our service guidelines. We reserve the right to update terms at any time to ensure quality service.</p>
+    </div>
+
+    <div id="return" class="section">
+      <h2>↩️ Return & Refund Policy</h2>
+      <p>Due to the nature of our services, returns are only applicable in case of incorrect or incomplete digital delivery. Refunds are processed within <strong>5–7 business days</strong>.</p>
+    </div>
+
+    <div id="faq" class="section">
+      <h2>❓ Frequently Asked Questions (FAQ)</h2>
+      <p><strong>Q: What services do you offer?</strong><br>A: Printing, scanning, online form filling, browsing, money transfers, SIM services, and more.</p>
+      <p><strong>Q: What are your working hours?</strong><br>A: <strong>9:00 AM to 8:00 PM</strong>, Monday to Saturday.</p>
+    </div>
+
+    <div id="privacy" class="section">
+      <h2>🔒 Privacy Policy</h2>
+      <p>We respect your privacy. Any data you share with us is strictly confidential and used only for service purposes. <strong>No third-party sharing</strong> is permitted.</p>
+    </div>
+  </div>
+
+  <!-- Section Switching Script -->
+  <script>
+    function showSection(id) {
+      const sections = document.querySelectorAll('.section');
+      sections.forEach(section => section.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.add('active');
+        window.scrollTo(0, target.offsetTop - 60);
+      }
+    }
+
+    window.addEventListener('load', () => {
+      const hash = window.location.hash.substring(1);
+      showSection(hash || 'track');
+    });
+
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.substring(1);
+      showSection(hash);
+    });
+  </script>
+
+</body>
+</html>

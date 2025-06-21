@@ -3,85 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Home - {{ short_name }}</title>
+  <title>Settings - {{ short_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 font-sans">
-
-  <div class="flex" id="mainContent">
-
-    <!-- Include Sidebar -->
-    {% include 'sidebar.html' %}
-
-  <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden">
-
-  <script>
-    const tabEn = document.getElementById('tab-en');
-    const tabHi = document.getElementById('tab-hi');
-
-    function setActiveTab(lang) {
-      if (lang === 'en') {
-        tabEn.classList.add('border-blue-600', 'text-blue-600', 'font-semibold');
-        tabEn.classList.remove('border-transparent', 'text-gray-600');
-        tabHi.classList.remove('border-blue-600', 'text-blue-600', 'font-semibold');
-        tabHi.classList.add('border-transparent', 'text-gray-600');
-      } else {
-        tabHi.classList.add('border-blue-600', 'text-blue-600', 'font-semibold');
-        tabHi.classList.remove('border-transparent', 'text-gray-600');
-        tabEn.classList.remove('border-blue-600', 'text-blue-600', 'font-semibold');
-        tabEn.classList.add('border-transparent', 'text-gray-600');
-      }
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <style>
+    body {
+      background: #0f172a;
+      color: #e0f7fa;
     }
 
-    tabEn.addEventListener('click', () => {
-      setActiveTab('en');
-      alert('Selected language: English');
-      // TODO: Add your actual language switching logic here
-    });
+    .glass-box {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+    }
 
-    tabHi.addEventListener('click', () => {
-      setActiveTab('hi');
-      alert('Selected language: हिंदी');
-      // TODO: Add your actual language switching logic here
-    });
+    .btn-neon {
+      background-color: #00bcd4;
+      color: white;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px #00bcd4, 0 0 20px #00bcd4;
+    }
 
-    // Initialize with English active
-    setActiveTab('en');
-  </script>
+    .btn-neon:hover {
+      background-color: #0288d1;
+      box-shadow: 0 0 20px #0288d1, 0 0 30px #0288d1;
+    }
 
-      <!-- Delete Account -->
+    .modal-bg {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0f172a] text-cyan-100">
+  <div class="flex">
+
+    <!-- Sidebar -->
+    <div class="fixed top-0 left-0 w-56 h-full z-40">
+      {% include 'sidebar.html' %}
+    </div>
+
+    <!-- Main Area -->
+    <main class="ml-56 w-full px-4 sm:px-6 py-4 pt-20 overflow-x-auto">
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4">
+            {% for category, message in messages %}
+              <div class="px-4 py-2 rounded mb-2 text-sm
+                {% if category == 'success' %} bg-green-900 text-green-200
+                {% elif category == 'error' %} bg-red-900 text-red-200
+                {% else %} bg-gray-900 text-white {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Close Account Box -->
       <div onclick="document.getElementById('deleteConfirm').classList.remove('hidden')"
-     class="mt-10 bg-white p-6 rounded-xl shadow space-y-4 border border-red-200 cursor-pointer hover:bg-red-50 transition">
-  <h2 class="text-xl font-semibold text-red-600">Close Your Account</h2>
-  <p class="text-sm text-gray-600">This action is irreversible. All your data will be permanently removed.</p>
-</div>
+        class="mt-6 glass-box px-4 py-3 rounded-lg shadow border border-red-400 cursor-pointer hover:bg-red-500/10 transition space-y-2 max-w-md">
+        <h2 class="text-lg font-semibold text-red-400">❌ Close Your Account</h2>
+        <p class="text-sm text-cyan-100 leading-tight">This action is irreversible. All your data will be permanently removed.</p>
+      </div>
 
       <!-- Delete Confirmation Modal -->
-<div id="deleteConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 {% if request.args.get('admin_delete_blocked') or request.args.get('owner_delete_blocked') %}block{% else %}hidden{% endif %}">
-  <div class="bg-white w-full max-w-md p-6 rounded-xl shadow space-y-4 relative">
-    <button onclick="document.getElementById('deleteConfirm').classList.add('hidden')" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">&times;</button>
-    <h2 class="text-xl font-semibold text-red-600">Are you sure?</h2>
+      <div id="deleteConfirm" class="fixed inset-0 modal-bg flex items-start justify-center z-50 hidden">
+        <div class="mt-16 bg-gray-900 text-white w-full max-w-2xl p-6 rounded-xl shadow border border-red-500 relative">
+          <button onclick="document.getElementById('deleteConfirm').classList.add('hidden')" class="absolute top-2 right-4 text-2xl text-red-300 hover:text-white">&times;</button>
+          <h2 class="text-2xl font-semibold text-red-400 mb-4">⚠️ Are you sure?</h2>
 
-    {% if request.args.get("admin_delete_blocked") %}
-      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm">
-        🙅‍♂️ Admins must stay — no ghosting allowed! 👻
+          {% if request.args.get("admin_delete_blocked") %}
+            <div class="bg-red-800 border border-red-500 px-4 py-2 rounded text-sm mb-4">
+              🙅‍♂️ Admins must stay — no ghosting allowed! 👻
+            </div>
+          {% elif request.args.get("owner_delete_blocked") %}
+            <div class="bg-red-800 border border-red-500 px-4 py-2 rounded text-sm mb-4">
+              🛑 Owner can’t delete self. You’re stuck with us! 😂
+            </div>
+          {% else %}
+            <p class="text-sm text-gray-300 mb-6">Do you really want to delete your account? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+              <button onclick="document.getElementById('deleteConfirm').classList.add('hidden')" class="px-4 py-2 text-sm font-semibold rounded bg-gray-800 border border-red-400 text-red-300 hover:bg-red-600/10">
+                No
+              </button>
+              <form method="POST" action="/delete-account">
+                <button type="submit" class="px-4 py-2 text-sm font-semibold rounded bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/50">
+                  Yes, Delete
+                </button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
       </div>
 
-    {% elif request.args.get("owner_delete_blocked") %}
-      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm">
-        ⚠️ Owner can’t delete self. You’re stuck with us! 😂
-      </div>
-
-    {% else %}
-      <p class="text-sm text-gray-600">Do you really want to delete your account? This action cannot be undone.</p>
-      <div class="flex justify-end space-x-2">
-        <button onclick="document.getElementById('deleteConfirm').classList.add('hidden')" class="px-4 py-2 text-sm text-gray-600 bg-gray-200 rounded-md hover:bg-gray-300">No</button>
-        <form method="POST" action="/delete-account">
-          <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow text-sm">Yes, Delete</button>
-        </form>
-      </div>
-    {% endif %}
+    </main>
   </div>
-</div>
 </body>
 </html>

@@ -6,97 +6,252 @@
   <title>Admin Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #000428, #004e92);
+      color: #e0f7fa;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 230, 255, 0.3);
+    }
+    .hover-glow:hover {
+      color: #00e6ff;
+      text-shadow: 0 0 5px #00e6ff, 0 0 10px #00e6ff;
+    }
+    .btn-neon {
+      background: transparent;
+      border: 1px solid #00e6ff;
+      color: #00e6ff;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 0 5px #00e6ff50;
+    }
+    .btn-neon:hover {
+      background: #00e6ff;
+      color: black;
+      box-shadow: 0 0 10px #00e6ff, 0 0 20px #00e6ff;
+    }
+    .input-neon {
+      background-color: rgba(255,255,255,0.05);
+      border: 1px solid rgba(0, 255, 255, 0.2);
+      color: #e0f7fa;
+    }
+    .input-neon:focus {
+      outline: none;
+      border-color: #00e6ff;
+      box-shadow: 0 0 5px #00e6ff;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body>
+<body class="bg-[#0f172a] text-white">
 
-  <div class="flex" id="mainContent">
-
-    <!-- Include Sidebar -->
+  <!-- Sidebar -->
+  <div class="fixed top-0 left-0 w-56 h-full z-40">
     {% include 'sidebar.html' %}
+  </div>
 
-    <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden" x-data="{ showModal: false }">
+  <!-- Main Content -->
+  <main class="ml-56 px-4 sm:px-6 py-4 pt-20 overflow-hidden flex-1" x-data="{ showModal: false }">
 
       <!-- Top bar -->
       <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Admin</h1>
+        <h1 class="text-2xl font-bold text-cyan-300">👨‍💼 Admin Management</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="my-4">
+            {% for category, message in messages %}
+              <div class="px-4 py-2 rounded mb-2 text-sm
+                {% if category == 'success' %} bg-green-900 text-green-200
+                {% elif category == 'error' %} bg-red-900 text-red-200
+                {% else %} bg-gray-900 text-white {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
         <button @click="showModal = true"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-          Create Admin
+                class="btn-neon px-4 py-2 rounded shadow">
+          ➕ Create Admin
         </button>
       </div>
 
-      <!-- Admin List Table -->
-      <div class="overflow-x-auto bg-white rounded shadow">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">S.No.</th>
-              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Name</th>
-              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Email</th>
-              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Contact</th>
-              <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Action</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for admin in admins %}
-            <tr>
-              <td class="px-4 py-2 text-sm text-gray-700">{{ loop.index }}</td>
-              <td class="px-4 py-2 text-sm text-gray-800">{{ admin.name }}</td>
-              <td class="px-4 py-2 text-sm text-gray-800">{{ admin.email }}</td>
-              <td class="px-4 py-2 text-sm text-gray-800">{{ admin.contact }}</td>
-              <td class="px-4 py-2 text-sm text-gray-800">
-                <form method="POST" action="{{ url_for('delete_admin', admin_id=admin.id) }}" onsubmit="return confirm('Are you sure you want to delete this admin?');">
-                  <button type="submit" class="text-red-600 hover:text-red-800 font-semibold">Delete</button>
-                </form>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      <!-- Admin List Table with Fixed Header -->
+<div class="glass rounded-xl p-4 max-h-[72vh] overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm border-separate border-spacing-0">
+      <thead class="bg-cyan-950 text-cyan-100 uppercase text-xs sticky top-0 z-10">
+        <tr>
+          <th class="px-4 py-2 text-left bg-cyan-950">S.No.</th>
+          <th class="px-4 py-2 text-left bg-cyan-950">Name</th>
+          <th class="px-4 py-2 text-left bg-cyan-950">Email</th>
+          <th class="px-4 py-2 text-left bg-cyan-950">Contact</th>
+          <th class="px-4 py-2 text-left bg-cyan-950">Action</th>
+        </tr>
+      </thead>
+    </table>
+    <div class="overflow-y-auto max-h-[70vh]">
+      <table class="min-w-full text-sm">
+        <tbody class="divide-y divide-cyan-800">
+          {% for admin in admins %}
+          <tr class="hover:bg-cyan-900/10 transition">
+            <td class="px-4 py-2">{{ loop.index }}</td>
+            <td class="px-4 py-2">{{ admin.name }}</td>
+            <td class="px-4 py-2">{{ admin.email }}</td>
+            <td class="px-4 py-2">{{ admin.contact }}</td>
+            <td class="px-4 py-2">
+              <form method="POST" action="{{ url_for('delete_admin', admin_id=admin.id) }}"
+                    onsubmit="return confirm('Are you sure you want to delete this admin?');">
+                <button type="submit" class="text-red-400 hover:text-red-600 font-semibold">🗑️ Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
       <!-- Modal Form -->
-      <div x-show="showModal" x-cloak
-           class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-        <div @click.away="showModal = false" class="bg-white w-full max-w-lg p-6 rounded shadow-lg relative">
+<div x-show="showModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div @click.away="showModal = false"
+       class="glass w-full max-w-lg p-6 rounded-xl shadow-xl space-y-6 text-white">
 
-          <h2 class="text-xl font-semibold mb-4 text-center">Create Admin</h2>
+    <h2 class="text-xl font-semibold text-center text-cyan-300">➕ Create Admin</h2>
 
-          <form method="POST" action="{{ url_for('create_admin') }}" class="space-y-4">
-  <div>
-    <label class="block font-semibold mb-1" for="full_name">Full Name</label>
-    <input type="text" name="full_name" id="full_name" required
-           class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-  </div>
+    <!-- Admin Creation Form -->
+    <form method="POST" action="{{ url_for('create_admin') }}" class="space-y-4" id="admin-form">
 
-  <div>
-    <label class="block font-semibold mb-1" for="email">Email</label>
-    <input type="email" name="email" id="email" required
-           class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-  </div>
+      <!-- Full Name -->
+      <div>
+        <label for="full_name" class="block font-semibold mb-1">Full Name</label>
+        <input type="text" name="full_name" id="full_name" required
+               class="w-full rounded px-3 py-2 input-neon" />
+      </div>
 
-  <div>
-    <label class="block font-semibold mb-1" for="contact">Contact</label>
-    <input type="text" name="contact" id="contact" required
-           class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500" />
-  </div>
-
-  <div class="text-center">
-    <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">
-      Submit
-    </button>
-    <button type="button" @click="showModal = false"
-            class="ml-3 text-gray-600 hover:text-red-600">
-      Cancel
-    </button>
-  </div>
-</form>
+      <!-- Email + Send OTP -->
+      <div>
+        <label for="email" class="block font-semibold mb-1">Email</label>
+        <div class="flex gap-2">
+          <input type="email" name="email" id="admin_email" required
+                 class="flex-1 rounded px-3 py-2 input-neon" />
+          <button type="button" onclick="sendAdminOTP()"
+                  class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded text-white">
+            Send OTP
+          </button>
         </div>
       </div>
 
+      <!-- OTP Input (hidden by default) -->
+      <div id="admin-otp-section" style="display: none;">
+        <label for="otp" class="block font-semibold mb-1 mt-2">Enter OTP</label>
+        <div class="flex gap-2">
+          <input type="text" name="otp" id="admin_otp" placeholder="6-digit code"
+                 class="flex-1 rounded px-3 py-2 input-neon" />
+          <button type="button" onclick="verifyAdminOTP()"
+                  class="bg-green-600 hover:bg-green-500 px-3 py-2 rounded text-white">
+            Verify
+          </button>
+        </div>
+        <p id="admin-otp-msg" class="text-sm mt-1 text-yellow-400"></p>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <label for="contact" class="block font-semibold mb-1">Contact</label>
+        <input type="text" name="contact" id="contact" required
+               class="w-full rounded px-3 py-2 input-neon" />
+      </div>
+
+      <!-- ✅ Close Form Tag -->
+    </form>
+
+    <!-- Buttons (outside form but used for form submission) -->
+    <div class="text-center pt-4">
+      <button type="submit" form="admin-form" id="adminSubmitBtn" class="btn-neon px-6 py-2 rounded" disabled>
+        ✅ Submit
+      </button>
+      <button type="button" @click="showModal = false"
+              class="ml-4 text-gray-300 hover:text-red-500">
+        ❌ Cancel
+      </button>
+    </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+  function sendAdminOTP() {
+    const email = document.getElementById("admin_email").value.trim();
+    if (!email) {
+      alert("Please enter an email first.");
+      return;
+    }
+
+    fetch("/send-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const otpMsg = document.getElementById("admin-otp-msg");
+      if (data.success) {
+        document.getElementById("admin-otp-section").style.display = "block";
+        otpMsg.textContent = "✅ OTP sent to email. Valid for 5 minutes.";
+        otpMsg.style.color = "lightgreen";
+      } else {
+        otpMsg.textContent = "❌ " + data.message;
+        otpMsg.style.color = "red";
+      }
+    })
+    .catch(err => {
+      alert("Error sending OTP.");
+      console.error(err);
+    });
+  }
+
+  function verifyAdminOTP() {
+    const otp = document.getElementById("admin_otp").value.trim();
+    if (!otp) {
+      alert("Enter the OTP.");
+      return;
+    }
+
+    fetch("/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ otp })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const btn = document.getElementById("adminSubmitBtn");
+      const msg = document.getElementById("admin-otp-msg");
+
+      if (data.verified) {
+        msg.textContent = "✅ OTP Verified!";
+        msg.style.color = "lightgreen";
+        btn.disabled = false;
+        btn.style.cursor = "pointer";
+      } else {
+        msg.textContent = "❌ " + data.message || "Invalid OTP.";
+        msg.style.color = "red";
+      }
+    })
+    .catch(err => {
+      alert("OTP verification failed.");
+      console.error(err);
+    });
+  }
+</script>
+
     </main>
   </div>
-
 </body>
 </html>

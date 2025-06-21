@@ -5,72 +5,131 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sales - {{ short_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #000428, #004e92);
+      color: #e0f7fa;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 20px rgba(0, 230, 255, 0.2);
+    }
+
+    th {
+      background: rgba(0, 255, 255, 0.1);
+      color: #00e6ff;
+      font-weight: 600;
+    }
+
+    td {
+      color: #e0f7fa;
+      border-color: #1f2937;
+    }
+
+    .status-badge {
+      border-radius: 9999px;
+      padding: 0.25rem 0.75rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .status-pending { background-color: #ffb300; color: black; }
+    .status-accepted { background-color: #4caf50; color: white; }
+    .status-cancelled { background-color: #f44336; color: white; }
+    .status-delivered { background-color: #2196f3; color: white; }
+
+    /* Sidebar Fix */
+    .fixed-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 50;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="font-sans">
+
   <div class="flex">
 
-    <!-- Sidebar -->
-    {% include 'sidebar.html' %}
+    <!-- Fixed Sidebar -->
+    <div class="fixed-sidebar w-64 hidden md:block">
+      {% include 'sidebar.html' %}
+    </div>
 
     <!-- Main Content -->
-    <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:pl-38 overflow-hidden">
-      <header class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold">Sales Overview</h1>
+    <main class="flex-1 px-4 sm:px-6 py-4 pt-20 md:ml-38">
+
+      <!-- Page Header -->
+      <header class="flex justify-between items-center mb-6 text-cyan-300">
+        <h1 class="text-3xl font-semibold">Sales Overview</h1>
       </header>
 
-      <!-- Analytics Summary -->
-      <div class="bg-white p-4 rounded shadow mb-6">
-        <h2 class="font-semibold mb-4">Sales Analytics</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4 space-y-2">
+            {% for category, message in messages %}
+              <div class="p-3 rounded glass text-sm border 
+                          {% if category == 'success' %} border-green-400 text-green-300 
+                          {% elif category == 'error' %} border-red-400 text-red-300 
+                          {% else %} border-cyan-400 text-cyan-300 {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-          <!-- Total Orders -->
-          <a href="{{ url_for('orders') }}" class="block bg-blue-100 p-4 rounded hover:bg-blue-200">
-            <div class="text-sm text-gray-600">Total Orders</div>
+      <!-- Analytics Summary -->
+      <div class="glass p-6 rounded-xl mb-8">
+        <h2 class="text-xl font-bold text-cyan-400 mb-4">Sales Analytics</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center text-white">
+
+          <a href="{{ url_for('orders') }}" class="glass p-4 rounded hover:scale-105 transition transform">
+            <div class="text-sm text-cyan-300">Total Orders</div>
             <div class="text-xl font-bold">{{ total_orders }}</div>
           </a>
 
-          <!-- Delivered Orders -->
-          <a href="{{ url_for('orders', status='delivered') }}" class="block bg-green-100 p-4 rounded hover:bg-green-200">
-            <div class="text-sm text-gray-600">Delivered Orders</div>
+          <a href="{{ url_for('orders', status='delivered') }}" class="glass p-4 rounded hover:scale-105 transition transform">
+            <div class="text-sm text-green-300">Delivered Orders</div>
             <div class="text-xl font-bold">{{ delivered_orders }}</div>
           </a>
 
-          <!-- Pending Orders -->
-          <a href="{{ url_for('orders', status='pending') }}" class="block bg-yellow-100 p-4 rounded hover:bg-yellow-200">
-            <div class="text-sm text-gray-600">Pending Orders</div>
+          <a href="{{ url_for('orders', status='pending') }}" class="glass p-4 rounded hover:scale-105 transition transform">
+            <div class="text-sm text-yellow-300">Pending Orders</div>
             <div class="text-xl font-bold">{{ pending_orders }}</div>
           </a>
 
-          <!-- Online Revenue -->
-          <div class="bg-purple-100 p-4 rounded">
-            <div class="text-sm text-gray-600">Online Revenue</div>
-            <div class="text-xl font-bold">₹{{ total_revenue }}</div>
+          <div class="glass p-4 rounded">
+            <div class="text-sm text-purple-300">Online Revenue</div>
+            <div class="text-xl font-bold text-purple-100">₹{{ total_revenue }}</div>
           </div>
         </div>
 
-        <!-- Offline & Grand Revenue -->
-        <div class="grid grid-cols-2 md:grid-cols-2 gap-4 text-center mt-6">
-          <!-- Offline Revenue -->
-          <div class="bg-indigo-100 p-4 rounded">
-            <div class="text-sm text-gray-600">Offline Revenue</div>
-            <div class="text-xl font-bold">₹{{ offline_revenue }}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 text-center">
+          <div class="glass p-4 rounded">
+            <div class="text-sm text-indigo-300">Offline Revenue</div>
+            <div class="text-xl font-bold text-indigo-100">₹{{ offline_revenue }}</div>
           </div>
-
-          <!-- Grand Revenue -->
-          <div class="bg-green-200 p-4 rounded">
-            <div class="text-sm text-gray-700 font-medium">Grand Revenue</div>
-            <div class="text-xl font-bold text-black">₹{{ grand_revenue }}</div>
+          <div class="glass p-4 rounded border border-green-300">
+            <div class="text-sm text-green-400 font-medium">Grand Revenue</div>
+            <div class="text-2xl font-bold text-green-100">₹{{ grand_revenue }}</div>
           </div>
         </div>
       </div>
 
       <!-- Online Orders Table -->
-      <div class="bg-white p-4 rounded shadow mb-8">
-        <h2 class="font-semibold mb-4">All Orders (Online)</h2>
+      <div class="glass p-6 rounded-xl mb-10">
+        <h2 class="text-lg font-bold text-cyan-300 mb-4">All Orders (Online)</h2>
         <div class="overflow-x-auto">
-          <table class="min-w-full table-auto text-sm">
+          <table class="min-w-full table-auto text-sm border border-cyan-400 rounded-xl overflow-hidden">
             <thead>
-              <tr class="bg-gray-100 text-left">
+              <tr>
                 <th class="px-4 py-2">Item</th>
                 <th class="px-4 py-2">Qty</th>
                 <th class="px-4 py-2">Amount</th>
@@ -81,38 +140,38 @@
             </thead>
             <tbody>
               {% for order in orders %}
-                <tr class="border-b hover:bg-gray-50">
-                  <td class="px-4 py-2">{{ order.item_name }}</td>
-                  <td class="px-4 py-2">{{ order.quantity }}</td>
-                  <td class="px-4 py-2">₹{{ order.amount }}</td>
-                  <td class="px-4 py-2">
-                    <span class="px-2 py-1 rounded text-xs 
-                      {% if order.status == 'delivered' %}bg-blue-200 text-black
-                      {% elif order.status == 'pending' %}bg-yellow-200 text-black
-                      {% elif order.status == 'cancelled' %}bg-red-200 text-black
-                      {% else %}bg-green-200 text-black{% endif %}">
-                      {{ order.status }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-2">{{ order.user_name }}</td>
-                  <td class="px-4 py-2">{{ order.order_date }}</td>
-                </tr>
+              <tr class="border-b border-cyan-800 hover:bg-cyan-900/30">
+                <td class="px-4 py-2">{{ order.item_name }}</td>
+                <td class="px-4 py-2">{{ order.quantity }}</td>
+                <td class="px-4 py-2">₹{{ order.amount }}</td>
+                <td class="px-4 py-2">
+                  <span class="status-badge
+                    {% if order.status == 'delivered' %}status-delivered
+                    {% elif order.status == 'pending' %}status-pending
+                    {% elif order.status == 'cancelled' %}status-cancelled
+                    {% else %}status-accepted{% endif %}">
+                    {{ order.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-2">{{ order.user_name }}</td>
+                <td class="px-4 py-2">{{ order.order_date }}</td>
+              </tr>
               {% endfor %}
             </tbody>
           </table>
           {% if orders|length == 0 %}
-            <p class="text-gray-500 p-4">No orders available.</p>
+            <p class="text-center text-cyan-200 mt-4">No online orders available.</p>
           {% endif %}
         </div>
       </div>
 
       <!-- Offline Bills Table -->
-      <div class="bg-white p-4 rounded shadow">
-        <h2 class="font-semibold mb-4">Offline Bills</h2>
+      <div class="glass p-6 rounded-xl">
+        <h2 class="text-lg font-bold text-cyan-300 mb-4">Offline Bills</h2>
         <div class="overflow-x-auto">
-          <table class="min-w-full table-auto text-sm">
+          <table class="min-w-full table-auto text-sm border border-cyan-400 rounded-xl">
             <thead>
-              <tr class="bg-gray-100 text-left">
+              <tr>
                 <th class="px-4 py-2">Name</th>
                 <th class="px-4 py-2">Contact</th>
                 <th class="px-4 py-2">Amount</th>
@@ -121,17 +180,17 @@
             </thead>
             <tbody>
               {% for bill in bills %}
-              <tr class="border-b hover:bg-gray-50">
+              <tr class="border-b border-cyan-800 hover:bg-cyan-900/30">
                 <td class="px-4 py-2">{{ bill.name }}</td>
                 <td class="px-4 py-2">{{ bill.contact }}</td>
-                <td class="px-4 py-2 font-semibold text-green-600">₹{{ bill.amount }}</td>
+                <td class="px-4 py-2 text-green-300 font-semibold">₹{{ bill.amount }}</td>
                 <td class="px-4 py-2">{{ bill.date }}</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
           {% if bills|length == 0 %}
-            <p class="text-gray-500 p-4">No offline bills recorded.</p>
+            <p class="text-center text-cyan-200 mt-4">No offline bills available.</p>
           {% endif %}
         </div>
       </div>
